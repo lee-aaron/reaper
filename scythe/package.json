@@ -4,19 +4,30 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build && next export",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.9.0",
+    "@emotion/styled": "^11.8.1",
+    "@fortawesome/fontawesome-svg-core": "^6.1.1",
+    "@fortawesome/free-solid-svg-icons": "^6.1.1",
+    "@fortawesome/react-fontawesome": "^0.1.18",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
+    "@mui/icons-material": "^5.6.1",
     "@mui/lab": "^5.0.0-alpha.77",
     "@mui/material": "^5.6.1",
+    "@mui/x-data-grid": "^5.8.0",
+    "@reduxjs/toolkit": "^1.8.1",
     "google-protobuf": "^3.20.1-rc.1",
     "next": "12.1.4",
+    "notistack": "^2.0.4",
     "react": "18.0.0",
     "react-dom": "18.0.0",
+    "react-redux": "^7.2.8",
+    "redux-persist": "^6.0.0",
     "ts-protoc-gen": "^0.15.0"
   },
   "devDependencies": {

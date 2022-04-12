@@ -1,8 +1,5 @@
 #!/bin/bash
 
-mkdir -p ./ts/_proto
-mkdir -p ./go/_proto
-
 DIR=proto
 OUTDIR=scythe/proto
 
