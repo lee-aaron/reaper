@@ -86,10 +86,10 @@ const Home: NextPage = () => {
                 Pricing
               </Typography>
               <Typography variant="body1" align="center">
-                This is a subscription based platform that allows you to use this platform and gain access to forums.
+                This is a subscription based platform that allows you to use this platform and gain access to our discussion page.
               </Typography>
               <Typography variant="body1" align="center">
-                $5 USD per month
+                $10 USD per month
               </Typography>
             </Paper>
           </Grid>
