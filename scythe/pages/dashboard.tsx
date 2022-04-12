@@ -29,6 +29,8 @@ import React from "react";
 const Dashboard: NextPage = () => {
   const theme = useTheme();
 
+  // maybe some hook to signal protected route and redirect to login page
+
   return (
     <React.Fragment>
       <Container
