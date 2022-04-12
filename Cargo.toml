@@ -14,11 +14,3 @@ prost = "0.9"
 
 [build-dependencies]
 tonic-build = { version = "0.6", features = ["rustfmt"] }
-
-[[bin]]
-name = "client"
-path = "src/client.rs"
-
-[[bin]]
-name = "server"
-path = "src/server.rs"
