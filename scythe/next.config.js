@@ -1,6 +1,26 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-}
+const { PHASE_DEVELOPMENT_SERVER } = require('next/constants')
 
-module.exports = nextConfig
+const nextConfig = (phase, { defaultConfig }) => {
+  if (phase === PHASE_DEVELOPMENT_SERVER) {
+    return {
+      ...defaultConfig,
+      reactStrictMode: true,
+      async rewrites() {
+        return [
+          {
+            source: "/api",
+            destination: "http://localhost:8000/api",
+          },
+        ];
+      },
+    };
+  }
+  return {
+    ...defaultConfig,
+    reactStrictMode: true,
+    poweredByHeader: false,
+  };
+};
+
+module.exports = nextConfig;

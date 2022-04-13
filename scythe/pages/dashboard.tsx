@@ -22,14 +22,20 @@
 //   }
 // })
 
-import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
+import { Container, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
+import { useRouter } from "next/router";
 import React from "react";
+import { useAuth } from "../src/auth";
 
 const Dashboard: NextPage = () => {
   const theme = useTheme();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
-  // maybe some hook to signal protected route and redirect to login page
+  if (!isAuthenticated) {
+    router.push("/login");
+  }
 
   return (
     <React.Fragment>
