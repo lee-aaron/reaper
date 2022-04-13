@@ -26,7 +26,7 @@ import { Container, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { useAuth } from "../src/auth";
+import { useAuth } from "../../src/auth";
 
 const Dashboard: NextPage = () => {
   const theme = useTheme();
@@ -35,6 +35,7 @@ const Dashboard: NextPage = () => {
 
   if (!isAuthenticated) {
     router.push("/login");
+    return  <div>Loading...</div>;
   }
 
   return (
