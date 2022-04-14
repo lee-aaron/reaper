@@ -1,3 +1,4 @@
+use tonic::metadata::MetadataValue;
 use tonic::{transport::Server, Request, Response, Status};
 
 use hello_world::greeter_server::{Greeter, GreeterServer};
@@ -28,14 +29,32 @@ impl Greeter for MyGreeter {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "127.0.0.1:50051".parse().unwrap();
+
+    // note: probably better to create a new service for private services so we don't get hacked by http1
+    // such as interface to db
     let greeter = MyGreeter::default();
+    let greeter = GreeterServer::with_interceptor(greeter, check_auth);
+    let greeter = tonic_web::config()
+        .allow_all_origins()
+        .enable(greeter);
 
     println!("GreeterServer listening on {}", addr);
 
     Server::builder()
-        .add_service(GreeterServer::new(greeter))
+        .accept_http1(true)
+        .add_service(greeter)
         .serve(addr)
         .await?;
 
     Ok(())
+}
+
+fn check_auth(req: Request<()>) -> Result<Request<()>, Status> {
+    // pull user client id from db and match to correct secret token
+    let token = MetadataValue::from_str("Bearer some-secret-token").unwrap();
+
+    match req.metadata().get("authorization") {
+        Some(t) if token == t => Ok(req),
+        _ => Err(Status::unauthenticated("No valid auth token")),
+    }
 }

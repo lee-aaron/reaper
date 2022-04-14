@@ -1,26 +1,8 @@
-// import { grpc } from "@improbable-eng/grpc-web";
-// import { NodeHttpTransport } from "@improbable-eng/grpc-web-node-http-transport";
+import { grpc } from "@improbable-eng/grpc-web";
+import { NodeHttpTransport } from "@improbable-eng/grpc-web-node-http-transport";
 
-// import { HelloRequest, HelloReply } from '../proto/helloworld_pb'
-// import { Greeter } from '../proto/helloworld_pb_service'
-
-// grpc.setDefaultTransport(NodeHttpTransport());
-
-// const req = new HelloRequest();
-// req.setName('World');
-
-// grpc.invoke(Greeter.SayHello, {
-//   request: req,
-//   host: 'http://127.0.0.1:8080',
-//   onMessage: (message: HelloReply) => {
-//     console.log(message.getMessage());
-//   },
-//   onEnd: (code: grpc.Code, msg: string) => {
-//     if (code === grpc.Code.OK) {
-//       console.log(msg);
-//     }
-//   }
-// })
+import { HelloRequest, HelloReply } from '../proto/helloworld_pb'
+import { Greeter } from '../proto/helloworld_pb_service'
 
 import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
@@ -28,6 +10,27 @@ import React from "react";
 
 const Home: NextPage = () => {
   const theme = useTheme();
+
+  grpc.setDefaultTransport(NodeHttpTransport());
+
+  const req = new HelloRequest();
+  req.setName('World');
+
+  grpc.invoke(Greeter.SayHello, {
+    request: req,
+    host: 'http://127.0.0.1:50051',
+    onMessage: (message: HelloReply) => {
+      console.log(message.getMessage());
+    },
+    onEnd: (code: grpc.Code, msg: string) => {
+      if (code == grpc.Code.Unauthenticated) {
+        console.log('Unauthenticated');
+      }
+      if (code === grpc.Code.OK) {
+        console.log(msg);
+      }
+    }
+  })
 
   return (
     <React.Fragment>

@@ -3,6 +3,8 @@
 DIR=proto
 OUTDIR=scythe/proto
 
+[ ! -d "$OUTDIR" ] && mkdir -p "$OUTDIR"
+
 protoc \
   --plugin=protoc-gen-ts=./scythe/node_modules/.bin/protoc-gen-ts \
   -I ./proto \
