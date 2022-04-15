@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const { PHASE_DEVELOPMENT_SERVER } = require('next/constants')
+const { PHASE_DEVELOPMENT_SERVER } = require("next/constants");
 
 const nextConfig = (phase, { defaultConfig }) => {
   if (phase === PHASE_DEVELOPMENT_SERVER) {
@@ -9,8 +9,8 @@ const nextConfig = (phase, { defaultConfig }) => {
       async rewrites() {
         return [
           {
-            source: "/api",
-            destination: "http://localhost:8000/api",
+            source: "/api/:path*",
+            destination: "http://localhost:8000/api/:path*",
           },
         ];
       },

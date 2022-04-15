@@ -30,21 +30,12 @@ impl Greeter for MyGreeter {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = "127.0.0.1:50051".parse().unwrap();
 
-    // note: probably better to create a new service for private services so we don't get hacked by http1
-    // such as interface to db
     let greeter = MyGreeter::default();
     let greeter = GreeterServer::with_interceptor(greeter, check_auth);
-    let greeter = tonic_web::config()
-        .allow_all_origins()
-        .enable(greeter);
 
     println!("GreeterServer listening on {}", addr);
 
-    Server::builder()
-        .accept_http1(true)
-        .add_service(greeter)
-        .serve(addr)
-        .await?;
+    Server::builder().add_service(greeter).serve(addr).await?;
 
     Ok(())
 }

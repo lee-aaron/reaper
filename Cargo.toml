@@ -12,6 +12,15 @@ log = "0.4"
 prost = "0.10"
 prost-types = "0.10"
 tonic-web = "0.3.0"
+actix-web = "4.0"
+actix-files = "0.6"
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive", "rc"] }
+clap = { version = "3.1.8", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = { version = "0.7.0", features = ["prost", "compression"] }
+
+[[bin]]
+name = "api"
+path = "src/api.rs"
