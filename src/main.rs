@@ -1,51 +1,40 @@
-use tonic::metadata::MetadataValue;
-use tonic::{transport::Server, Request, Response, Status};
-
-use hello_world::greeter_server::{Greeter, GreeterServer};
-use hello_world::{HelloReply, HelloRequest};
-
-pub mod hello_world {
-    tonic::include_proto!("helloworld");
-}
-
-#[derive(Debug, Default)]
-pub struct MyGreeter {}
-
-#[tonic::async_trait]
-impl Greeter for MyGreeter {
-    async fn say_hello(
-        &self,
-        request: Request<HelloRequest>,
-    ) -> Result<Response<HelloReply>, Status> {
-        println!("Got a request from {:?}", request.remote_addr());
-
-        let reply = hello_world::HelloReply {
-            message: format!("Hello {}!", request.into_inner().name),
-        };
-        Ok(Response::new(reply))
-    }
-}
+use reaper::startup::Application;
+use std::fmt::{Debug, Display};
+use tokio::task::JoinError;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let addr = "127.0.0.1:50051".parse().unwrap();
+async fn main() -> anyhow::Result<()> {
 
-    let greeter = MyGreeter::default();
-    let greeter = GreeterServer::with_interceptor(greeter, check_auth);
+    let application = Application::build().await?;
+    let application_task = tokio::spawn(application.run_until_stopped());
 
-    println!("GreeterServer listening on {}", addr);
-
-    Server::builder().add_service(greeter).serve(addr).await?;
+    tokio::select! {
+        o = application_task => report_exit("API", o)
+    }
 
     Ok(())
 }
 
-fn check_auth(req: Request<()>) -> Result<Request<()>, Status> {
-    // pull user client id from db and match to correct secret token
-    let token = MetadataValue::from_str("Bearer some-secret-token").unwrap();
-
-    match req.metadata().get("authorization") {
-        Some(t) if token == t => Ok(req),
-        _ => Err(Status::unauthenticated("No valid auth token")),
+fn report_exit(task_name: &str, outcome: Result<Result<(), impl Debug + Display>, JoinError>) {
+    match outcome {
+        Ok(Ok(())) => {
+            tracing::info!("{} has exited", task_name)
+        }
+        Ok(Err(e)) => {
+            tracing::error!(
+                error.cause_chain = ?e,
+                error.message = %e,
+                "{} failed",
+                task_name
+            )
+        }
+        Err(e) => {
+            tracing::error!(
+                error.cause_chain = ?e,
+                error.message = %e,
+                "{}' task failed to complete",
+                task_name
+            )
+        }
     }
 }

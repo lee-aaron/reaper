@@ -62,4 +62,14 @@ mod api {
           "Ok"
         })
     }
+
+    #[post("/signup-user")]
+    pub async fn signup_user(
+        data: web::Data<()>,
+        form: web::Form<HashMap<String, String>>,
+    ) -> impl Responder {
+        build_resp(&{
+          "Ok"
+        })
+    }
 }

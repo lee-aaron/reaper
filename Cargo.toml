@@ -14,13 +14,21 @@ prost-types = "0.10"
 tonic-web = "0.3.0"
 actix-web = "4.0"
 actix-files = "0.6"
+anyhow = "1.0.40"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive", "rc"] }
+tracing = "0.1.19"
+tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
+tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1.1"
 clap = { version = "3.1.8", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = { version = "0.7.0", features = ["prost", "compression"] }
 
 [[bin]]
-name = "api"
-path = "src/api.rs"
+name = "reaper"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
