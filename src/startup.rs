@@ -33,6 +33,7 @@ async fn run(listener: TcpListener) -> Result<Server, anyhow::Error> {
   let server = HttpServer::new(move || {
     App::new()
       .service(Files::new("/", "scythe/out").index_file("index.html"))
+      .route("/login", web::post().to(login))
       .route("/health_check", web::get().to(health_check))
   })
   .listen(listener)?
