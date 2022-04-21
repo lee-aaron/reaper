@@ -111,6 +111,15 @@ const Header: React.FC<Props> = (props: Props) => {
             >
               <ListItemText primary="FAQ" />
             </ListItemButton>
+            <ListItemButton
+              component="a"
+              onClick={() => {
+                setOpen();
+                props.router.push("/dashboard");
+              }}
+            >
+              <ListItemText primary="Dashboard" />
+            </ListItemButton>
           </List>
         </Container>
       </SwipeableDrawer>

@@ -13,12 +13,14 @@ import {
 import application from "./application/reducer";
 import storage from "./sync_storage";
 import user from "./user/reducer";
+import authentication from "./authentication/reducer";
 
 const PERSISTED_KEYS: string[] = ["user"];
 
 const reducers = combineReducers({
   application,
   user,
+  authentication
 });
 
 const persistConfig = {

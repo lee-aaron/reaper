@@ -4,6 +4,7 @@ use tokio::task::JoinError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    env_logger::init();
 
     let application = Application::build().await?;
     let application_task = tokio::spawn(application.run_until_stopped());

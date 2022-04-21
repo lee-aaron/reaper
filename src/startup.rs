@@ -1,9 +1,9 @@
 use std::net::TcpListener;
 
-use actix_web::{web, App, HttpServer};
-use actix_web::dev::Server;
-use actix_files::Files;
 use crate::routes::*;
+use actix_web::dev::Server;
+use actix_web::{web, App, HttpServer};
+use tracing_actix_web::TracingLogger;
 
 pub struct Application {
     port: u16,
@@ -16,6 +16,8 @@ impl Application {
         let listener = TcpListener::bind(&address)?;
         let port = listener.local_addr().unwrap().port();
         let server = run(listener).await?;
+
+        tracing::debug!("Listening on {}", address);
 
         Ok(Self { port, server })
     }
@@ -30,13 +32,14 @@ impl Application {
 }
 
 async fn run(listener: TcpListener) -> Result<Server, anyhow::Error> {
-  let server = HttpServer::new(move || {
-    App::new()
-      .service(Files::new("/", "scythe/out").index_file("index.html"))
-      .route("/login", web::post().to(login))
-      .route("/health_check", web::get().to(health_check))
-  })
-  .listen(listener)?
-  .run();
-  Ok(server)
+    let server = HttpServer::new(move || {
+        App::new().wrap(TracingLogger::default()).service(
+            web::scope("/api")
+                .route("/oauth", web::post().to(login))
+                .route("/health_check", web::get().to(health_check)),
+        )
+    })
+    .listen(listener)?
+    .run();
+    Ok(server)
 }

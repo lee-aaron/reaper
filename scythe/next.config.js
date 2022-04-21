@@ -5,6 +5,7 @@ const nextConfig = (phase, { defaultConfig }) => {
   if (phase === PHASE_DEVELOPMENT_SERVER) {
     return {
       ...defaultConfig,
+      swcMinify: true,
       reactStrictMode: true,
       async rewrites() {
         return [
@@ -18,6 +19,7 @@ const nextConfig = (phase, { defaultConfig }) => {
   }
   return {
     ...defaultConfig,
+    swcMinify: true,
     reactStrictMode: true,
     poweredByHeader: false,
   };
