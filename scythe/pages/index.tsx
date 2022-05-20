@@ -26,7 +26,7 @@ const Home: NextPage = () => {
             variant="body1"
             align="center"
           >
-            A Discussion and Forum for Aaron&apos;s Crypto Holdings
+            A Place to start up your Private Community
           </Typography>
         </Paper>
         <Grid
@@ -47,8 +47,7 @@ const Home: NextPage = () => {
                 Services
               </Typography>
               <Typography variant="body1" align="center">
-                I provide crypto yield farming analysis services for various
-                coins and protocols across different networks.
+                Users can create a private subscription to their various platforms such as Discord
               </Typography>
             </Paper>
           </Grid>
@@ -62,10 +61,13 @@ const Home: NextPage = () => {
                 Pricing
               </Typography>
               <Typography variant="body1" align="center">
-                This is a subscription based platform that allows you to use this platform and gain access to our discussion page.
+                This is a managed subscription based platform where we charge monthly maintenance fees.
               </Typography>
               <Typography variant="body1" align="center">
-                $10 USD per month
+                Hosts can charge any amount greater than the management fee and can keep all profits!
+              </Typography>
+              <Typography variant="body1" align="center">
+                Current management fee is $10 per user per month.
               </Typography>
             </Paper>
           </Grid>

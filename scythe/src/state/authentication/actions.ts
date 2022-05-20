@@ -1,7 +1,8 @@
 import { createAction } from '@reduxjs/toolkit'
 
 export interface Credentials {
-  code: string;
+  email: string;
+  password: string;
 }
 
 export interface User {

@@ -1,29 +1,26 @@
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
-import MenuIcon from "@mui/icons-material/Menu";
+import LoginIcon from "@mui/icons-material/Login";
+import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
-  Container,
-  Divider,
   IconButton,
-  List,
-  ListItemButton,
-  ListItemText,
-  styled,
-  SwipeableDrawer,
   Toolbar,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import { NextRouter, withRouter } from "next/router";
+import Link from "next/link";
 import React from "react";
-import useToggle from "../../hooks/useToggle";
 import {
   useAnchorElCallback,
   useToggleSettingsMenu,
 } from "../../state/application/hooks";
 import { ApplicationModal } from "../../state/application/reducer";
+import { useAuthStatus } from "../../state/authentication/hooks";
+import { AuthStatus } from "../../state/authentication/reducer";
 import SettingsMenu from "../SettingsMenu";
 
 interface Props {
@@ -33,24 +30,14 @@ interface Props {
 
 const Header: React.FC<Props> = (props: Props) => {
   const theme = useTheme();
-  const Offset = styled("div")(({ theme }) => theme.mixins.toolbar);
-  const [open, setOpen] = useToggle();
   const toggleSettingsMenu = useToggleSettingsMenu();
   const setAnchorEl = useAnchorElCallback(ApplicationModal.SETTINGS);
+  const authStatus = useAuthStatus();
 
   return (
     <React.Fragment>
       <AppBar position="static">
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={setOpen}
-          >
-            <MenuIcon />
-          </IconButton>
           <Typography
             sx={{ flexGrow: 1, cursor: "pointer", paddingLeft: 1 }}
             variant="h4"
@@ -58,11 +45,26 @@ const Header: React.FC<Props> = (props: Props) => {
           >
             Reaper
           </Typography>
-          <IconButton onClick={props.toggleColorMode}>
-            {theme.palette.mode === "dark" ? (
-              <Brightness7Icon />
+          <Tooltip title="Dark Mode">
+            <IconButton onClick={props.toggleColorMode}>
+              {theme.palette.mode === "dark" ? (
+                <Brightness7Icon />
+              ) : (
+                <Brightness4Icon />
+              )}
+            </IconButton>
+          </Tooltip>
+          <IconButton>
+            {authStatus === AuthStatus.LOGGED_IN ? (
+              <Link href="/logout">
+                <LogoutIcon />
+              </Link>
             ) : (
-              <Brightness4Icon />
+              <Link href="/login">
+                <Tooltip title="Login">
+                  <LoginIcon />
+                </Tooltip>
+              </Link>
             )}
           </IconButton>
           <IconButton
@@ -79,50 +81,6 @@ const Header: React.FC<Props> = (props: Props) => {
           </IconButton>
         </Toolbar>
       </AppBar>
-      <SwipeableDrawer open={open} onOpen={setOpen} onClose={setOpen}>
-        <Container maxWidth="xs">
-          <List component="nav">
-            <Offset />
-            <Divider />
-            <ListItemButton
-              component="a"
-              onClick={() => {
-                setOpen();
-                props.router.push("/mypage");
-              }}
-            >
-              <ListItemText primary="My Page" />
-            </ListItemButton>
-            <ListItemButton
-              component="a"
-              onClick={() => {
-                setOpen();
-                props.router.push("/tracker");
-              }}
-            >
-              <ListItemText primary="Tax Tracker" />
-            </ListItemButton>
-            <ListItemButton
-              component="a"
-              onClick={() => {
-                setOpen();
-                props.router.push("/faq");
-              }}
-            >
-              <ListItemText primary="FAQ" />
-            </ListItemButton>
-            <ListItemButton
-              component="a"
-              onClick={() => {
-                setOpen();
-                props.router.push("/dashboard");
-              }}
-            >
-              <ListItemText primary="Dashboard" />
-            </ListItemButton>
-          </List>
-        </Container>
-      </SwipeableDrawer>
       <SettingsMenu />
     </React.Fragment>
   );

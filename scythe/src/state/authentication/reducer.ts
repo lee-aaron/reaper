@@ -33,7 +33,6 @@ export default createReducer(initialState, (builder) => {
       loginAuthentication,
       (state, { payload: { credentials: Credentials } }) => {
         state.isAuthenticated = false;
-        state.code = Credentials.code;
         state.status = AuthStatus.PENDING;
       }
     )

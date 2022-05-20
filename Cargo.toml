@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "sync", "time", "fs"] }
-tonic = { verison = "0.7.1", features = ["tls", "compression"] }
+tonic = { verison = "0.7.2", features = ["tls", "compression"] }
 env_logger = "0.9.0"
 log = "0.4"
 prost = "0.10"
@@ -17,8 +17,6 @@ actix-web = "4.0"
 actix-files = "0.6"
 actix-session = { git = "https://github.com/actix/actix-extras", branch = "master", features = ["redis-rs-tls-session"] }
 anyhow = "1.0.40"
-base64 = "0.13.0"
-argon2 = { version = "0.3", features = ["std"] }
 tracing-actix-web = "0.5"
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive", "rc"] }
@@ -26,20 +24,10 @@ tracing = "0.1.19"
 tracing-subscriber = { version = "0.3", features = ["registry", "env-filter"] }
 tracing-bunyan-formatter = "0.3"
 tracing-log = "0.1.1"
-uuid = { version = "0.8.1", features = ["v4", "serde"] }
-secrecy = { version = "0.8", features = ["serde"] }
 urlencoding = "2"
 thiserror = "1.0.24"
 actix-web-lab = "0.15"
-reqwest = "0.11.10"
 clap = { version = "3.1.8", features = ["derive"] }
 
 [build-dependencies]
 tonic-build = { version = "0.7.0", features = ["prost", "compression"] }
-
-[[bin]]
-name = "reaper"
-path = "src/main.rs"
-
-[lib]
-path = "src/lib.rs"

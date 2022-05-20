@@ -35,7 +35,7 @@ async fn run(listener: TcpListener) -> Result<Server, anyhow::Error> {
     let server = HttpServer::new(move || {
         App::new().wrap(TracingLogger::default()).service(
             web::scope("/api")
-                .route("/oauth", web::post().to(login))
+                .route("/login", web::post().to(login))
                 .route("/health_check", web::get().to(health_check)),
         )
     })
