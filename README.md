@@ -1,6 +1,20 @@
 # reaper
 
-## Login Flow
+## Front End
 
-User goes to /login -> gets redirected to discord oauth2 -> server side gets code and caches it
-User can visit other pages and pay for Discord community access
+```
+Serve front end from backend
+```
+
+## Back End
+
+```
+Exposes /api endpoint for login, signup, etc
+```
+
+## Microservices
+
+```
+HTTP/2/3 servers?
+Authentication, Stripe Billing, Database Interaction
+```
