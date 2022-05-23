@@ -15,7 +15,7 @@ import storage from "./sync_storage";
 import user from "./user/reducer";
 import authentication from "./authentication/reducer";
 
-const PERSISTED_KEYS: string[] = ["user"];
+const PERSISTED_KEYS: string[] = ["user", "authentication"];
 
 const reducers = combineReducers({
   application,

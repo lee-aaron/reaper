@@ -1,0 +1,12 @@
+application:
+  port: 8000
+  host: 0.0.0.0
+  hmac_secret: "0c9b613476e796626061d1ed5e98a9f7c591a76f78062b7ac1a49c5958badc6c0e8ff48d938110c94faa4e27a1a992b7f07d40b123791792def624f820ac4fba"
+database:
+  host: "127.0.0.1"
+  port: 5432
+  username: "postgres"
+  password: "password"
+  database_name: "reaper"
+  require_ssl: false
+redis_uri: "redis://127.0.0.1:6379"

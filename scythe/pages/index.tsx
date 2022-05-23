@@ -47,7 +47,8 @@ const Home: NextPage = () => {
                 Services
               </Typography>
               <Typography variant="body1" align="center">
-                Users can create a private subscription to their various platforms such as Discord
+                Users can create a private subscription to their various
+                platforms such as Discord
               </Typography>
             </Paper>
           </Grid>
@@ -61,10 +62,12 @@ const Home: NextPage = () => {
                 Pricing
               </Typography>
               <Typography variant="body1" align="center">
-                This is a managed subscription based platform where we charge monthly maintenance fees.
+                This is a managed subscription based platform where we charge
+                monthly maintenance fees.
               </Typography>
               <Typography variant="body1" align="center">
-                Hosts can charge any amount greater than the management fee and can keep all profits!
+                Hosts can charge any amount greater than the management fee and
+                can keep all profits!
               </Typography>
               <Typography variant="body1" align="center">
                 Current management fee is $10 per user per month.

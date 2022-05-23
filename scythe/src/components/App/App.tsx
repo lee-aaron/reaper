@@ -1,5 +1,6 @@
 import { SnackbarProvider } from "notistack";
 import React from "react";
+import AuthUpdater from "../../state/authentication/updater";
 import { useDarkModeManager } from "../../state/user/hooks";
 import UserUpdater from "../../state/user/updater";
 import Footer from "../Footer";
@@ -9,6 +10,7 @@ function Updaters() {
   return (
     <React.Fragment>
       <UserUpdater />
+      <AuthUpdater />
     </React.Fragment>
   );
 }

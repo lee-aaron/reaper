@@ -1,12 +1,14 @@
 use reaper::startup::Application;
 use std::fmt::{Debug, Display};
 use tokio::task::JoinError;
+use reaper::configuration::get_configuration;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
-    let application = Application::build().await?;
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let application = Application::build(configuration.clone()).await?;
     let application_task = tokio::spawn(application.run_until_stopped());
 
     tokio::select! {

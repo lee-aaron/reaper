@@ -56,8 +56,10 @@ const Header: React.FC<Props> = (props: Props) => {
           </Tooltip>
           <IconButton>
             {authStatus === AuthStatus.LOGGED_IN ? (
-              <Link href="/logout">
-                <LogoutIcon />
+              <Link href="/api/v1/logout">
+                <Tooltip title="Logout">
+                  <LogoutIcon />
+                </Tooltip>
               </Link>
             ) : (
               <Link href="/login">

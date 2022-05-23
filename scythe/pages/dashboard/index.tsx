@@ -1,12 +1,9 @@
 import { Container, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
-import { useRouter } from "next/router";
 import React from "react";
-import Loading from "../../src/components/Loading";
 
 const Dashboard: NextPage = () => {
   const theme = useTheme();
-  const router = useRouter();
 
   return (
     <React.Fragment>
