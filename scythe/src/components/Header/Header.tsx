@@ -2,7 +2,6 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import LoginIcon from "@mui/icons-material/Login";
 import LogoutIcon from "@mui/icons-material/Logout";
-import SettingsIcon from "@mui/icons-material/Settings";
 import {
   AppBar,
   IconButton,
@@ -11,16 +10,12 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { NextRouter, withRouter } from "next/router";
 import Link from "next/link";
+import { NextRouter, withRouter } from "next/router";
 import React from "react";
-import {
-  useAnchorElCallback,
-  useToggleSettingsMenu,
-} from "../../state/application/hooks";
-import { ApplicationModal } from "../../state/application/reducer";
-import { useAuthStatus } from "../../state/authentication/hooks";
-import { AuthStatus } from "../../state/authentication/reducer";
+import { useToggleNavMenu } from "../../state/application/hooks";
+import { useUser } from "../../state/authentication/hooks";
+import NavMenu from "../NavMenu";
 import SettingsMenu from "../SettingsMenu";
 
 interface Props {
@@ -30,14 +25,14 @@ interface Props {
 
 const Header: React.FC<Props> = (props: Props) => {
   const theme = useTheme();
-  const toggleSettingsMenu = useToggleSettingsMenu();
-  const setAnchorEl = useAnchorElCallback(ApplicationModal.SETTINGS);
-  const authStatus = useAuthStatus();
+  const toggleNavMenu = useToggleNavMenu();
+  const { isError } = useUser();
 
   return (
     <React.Fragment>
       <AppBar position="static">
         <Toolbar>
+          {!isError ? <NavMenu /> : null}
           <Typography
             sx={{ flexGrow: 1, cursor: "pointer", paddingLeft: 1 }}
             variant="h4"
@@ -55,7 +50,7 @@ const Header: React.FC<Props> = (props: Props) => {
             </IconButton>
           </Tooltip>
           <IconButton>
-            {authStatus === AuthStatus.LOGGED_IN ? (
+            {!isError ? (
               <Link href="/api/v1/logout">
                 <Tooltip title="Logout">
                   <LogoutIcon />
@@ -69,21 +64,9 @@ const Header: React.FC<Props> = (props: Props) => {
               </Link>
             )}
           </IconButton>
-          <IconButton
-            id="settings-menu-button"
-            onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-              setAnchorEl(e.currentTarget.id);
-              toggleSettingsMenu();
-            }}
-            sx={{
-              mr: theme.spacing(1),
-            }}
-          >
-            <SettingsIcon />
-          </IconButton>
+          <SettingsMenu />
         </Toolbar>
       </AppBar>
-      <SettingsMenu />
     </React.Fragment>
   );
 };

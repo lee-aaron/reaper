@@ -7,5 +7,5 @@ discord:
   client_id: "966453809335382106"
   client_secret: "A_RnL_ikt2SF6bZ1lyGJhgdKPeQz3hof"
   grant_type: "authorization_code"
-  redirect_uri: "http://localhost:8000/api/login"
+  redirect_uri: "http://localhost:3000/api/login"
   frontend_uri: "http://localhost:3000/"

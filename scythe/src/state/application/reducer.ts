@@ -5,6 +5,7 @@ export type PopupContent = string;
 
 export enum ApplicationModal {
   SETTINGS,
+  NAVIGATION
 }
 
 type PopupList = Array<{

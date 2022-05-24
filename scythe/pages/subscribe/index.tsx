@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import { useUser } from "../../src/state/authentication/hooks";
 
-const Dashboard: NextPage = () => {
+const Subscribe: NextPage = () => {
   const theme = useTheme();
   const { isError } = useUser();
   const router = useRouter();
@@ -28,7 +28,7 @@ const Dashboard: NextPage = () => {
           elevation={3}
         >
           <Typography variant="h4" align="center">
-            Dashboard
+            Subscribe
           </Typography>
         </Paper>
         <Grid
@@ -60,4 +60,4 @@ const Dashboard: NextPage = () => {
   );
 };
 
-export default Dashboard;
+export default Subscribe;

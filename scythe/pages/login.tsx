@@ -4,18 +4,15 @@ import {
   Grid,
   Paper,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import type { NextPage } from "next";
 import Image from "next/image";
 import React from "react";
 import discord from "../public/discord_logo_small.svg";
-import Loading from "../src/components/Loading";
-import { useIsAuthenticated } from "../src/state/authentication/hooks";
 
 const Login: NextPage = () => {
   const theme = useTheme();
-  const isAuthenticated = useIsAuthenticated();
 
   return (
     <React.Fragment>
@@ -45,38 +42,35 @@ const Login: NextPage = () => {
             justifyContent: "center",
           }}
         >
-          { isAuthenticated ? (
-            <Loading />
-          ) : (
-            <Grid item>
-              <Paper
+          <Grid item>
+            <Paper
+              sx={{
+                padding: theme.spacing(1, 1),
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <Button
+                href="https://discord.com/api/oauth2/authorize?client_id=966453809335382106&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Flogin&response_type=code&scope=identify%20email"
                 sx={{
                   padding: theme.spacing(1, 1),
-                  display: "flex",
-                  alignItems: "center",
-                  flexWrap: "wrap",
                 }}
+                variant="outlined"
               >
-                <Button
-                  href="https://discord.com/api/oauth2/authorize?client_id=966453809335382106&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2Fapi%2Flogin&response_type=code&scope=identify%20email"
+                <Image src={discord} height="50%" />
+                <Typography
+                  variant="button"
+                  align="center"
                   sx={{
-                    padding: theme.spacing(1, 1),
+                    ml: theme.spacing(2),
                   }}
                 >
-                  <Image src={discord} height="50%" />
-                  <Typography
-                    variant="button"
-                    align="center"
-                    sx={{
-                      ml: theme.spacing(2),
-                    }}
-                  >
-                    Connect to Discord
-                  </Typography>
-                </Button>
-              </Paper>
-            </Grid>
-          )}
+                  Connect to Discord
+                </Typography>
+              </Button>
+            </Paper>
+          </Grid>
         </Grid>
       </Container>
     </React.Fragment>

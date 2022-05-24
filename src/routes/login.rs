@@ -57,13 +57,12 @@ pub async fn login(
                             .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
                     session.renew();
                     session
-                        .insert_user_id(
-                            serde_json::to_string(&discord_response).map_err(|e| {
-                                login_redirect(LoginError::UnexpectedError(e.into()))
-                            })?,
-                        )
+                        .insert_discord_oauth(discord_response)
                         .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
-                    Ok(see_other(format!("{}/{}", &configuration.discord.frontend_uri, "/dashboard").as_str()))
+                    Ok(see_other(
+                        format!("{}/{}", &configuration.discord.frontend_uri, "/dashboard")
+                            .as_str(),
+                    ))
                 } else {
                     let e = LoginError::UnexpectedError(anyhow::anyhow!(
                         "Unexpected response from Discord"

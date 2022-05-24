@@ -4,21 +4,23 @@ use actix_web::dev::Payload;
 use actix_web::{FromRequest, HttpRequest};
 use std::future::{ready, Ready};
 
+use crate::routes::DiscordResponse;
+
 pub struct TypedSession(Session);
 
 impl TypedSession {
-    const USER_ID_KEY: &'static str = "credentials";
+    const DISCORD_ID_KEY: &'static str = "discord_id";
 
     pub fn renew(&self) {
         self.0.renew();
     }
 
-    pub fn insert_user_id(&self, cred: String) -> Result<(), serde_json::Error> {
-        self.0.insert(Self::USER_ID_KEY, cred)
+    pub fn insert_discord_oauth(&self, cred: DiscordResponse) -> Result<(), serde_json::Error> {
+        self.0.insert(Self::DISCORD_ID_KEY, cred)
     }
 
-    pub fn get_user_id(&self) -> Result<Option<String>, serde_json::Error> {
-        self.0.get(Self::USER_ID_KEY)
+    pub fn get_discord_oauth(&self) -> Result<Option<DiscordResponse>, serde_json::Error> {
+        self.0.get(Self::DISCORD_ID_KEY)
     }
 
     pub fn log_out(self) {

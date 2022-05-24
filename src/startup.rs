@@ -78,16 +78,13 @@ async fn run(
                 secret_key.clone(),
             ))
             .wrap(TracingLogger::default())
+            .route("/login", web::get().to(login))
+            .route("/health_check", web::get().to(health_check))
             .service(
-                web::scope("/api")
-                    .route("/login", web::get().to(login))
-                    .route("/health_check", web::get().to(health_check))
-                    .service(
-                        web::scope("/v1")
-                            .wrap(from_fn(reject_anonymous_users))
-                            .route("/user", web::get().to(user))
-                            .route("/logout", web::get().to(log_out)),
-                    ),
+                web::scope("/v1")
+                    .wrap(from_fn(reject_anonymous_users))
+                    .route("/user", web::get().to(user))
+                    .route("/logout", web::get().to(log_out)),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

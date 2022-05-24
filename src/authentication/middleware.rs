@@ -1,15 +1,11 @@
 use actix_web::{
     body::MessageBody,
     dev::{ServiceRequest, ServiceResponse},
-    error::InternalError,
     FromRequest, HttpMessage,
 };
 use actix_web_lab::middleware::Next;
 
-use crate::{
-    session_state::TypedSession,
-    utils::{e500, see_other},
-};
+use crate::{session_state::TypedSession, utils::e500};
 
 pub async fn reject_anonymous_users(
     mut req: ServiceRequest,
@@ -20,15 +16,14 @@ pub async fn reject_anonymous_users(
         TypedSession::from_request(http_request, payload).await
     }?;
 
-    match session.get_user_id().map_err(e500)? {
+    match session.get_discord_oauth().map_err(e500)? {
         Some(user_id) => {
             req.extensions_mut().insert(user_id);
             next.call(req).await
         }
         None => {
-            let response = see_other("/api/login");
             let e = anyhow::anyhow!("The user has not logged in");
-            Err(InternalError::from_response(e, response).into())
+            Err(e500(e))
         }
     }
 }

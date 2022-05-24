@@ -11,6 +11,7 @@ const Home: NextPage = () => {
         sx={{
           marginTop: 5,
         }}
+        maxWidth="md"
       >
         <Paper
           sx={{
@@ -47,8 +48,7 @@ const Home: NextPage = () => {
                 Services
               </Typography>
               <Typography variant="body1" align="center">
-                Users can create a private subscription to their various
-                platforms such as Discord
+                Users can create a private subscription to a creator's platform such as Discord
               </Typography>
             </Paper>
           </Grid>

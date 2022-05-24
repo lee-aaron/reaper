@@ -11,7 +11,7 @@ const nextConfig = (phase, { defaultConfig }) => {
         return [
           {
             source: "/api/:path*",
-            destination: "http://localhost:8000/api/:path*",
+            destination: "http://localhost:8000/:path*",
           },
         ];
       },

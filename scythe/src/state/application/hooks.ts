@@ -8,7 +8,7 @@ import {
   PopupContent,
   removePopup,
   setAnchorEl,
-  setOpenModal
+  setOpenModal,
 } from "./reducer";
 
 export function useModalOpen(modal: ApplicationModal): boolean {
@@ -27,7 +27,7 @@ export function useToggleModal(modal: ApplicationModal): () => void {
   );
 }
 
-export function useAnchorEl(modal: ApplicationModal): string {
+export function useAnchorEl(modal: ApplicationModal): any {
   const el = useAppSelector(
     (state: AppState) => state.application.anchorEl[modal]
   );
@@ -36,7 +36,7 @@ export function useAnchorEl(modal: ApplicationModal): string {
 
 export function useAnchorElCallback(
   modal: ApplicationModal
-): (el: string) => void {
+): (el: any) => void {
   const dispatch = useAppDispatch();
   return useCallback(
     (el) => dispatch(setAnchorEl({ key: modal, el })),
@@ -46,6 +46,18 @@ export function useAnchorElCallback(
 
 export function useToggleSettingsMenu(): () => void {
   return useToggleModal(ApplicationModal.SETTINGS);
+}
+
+export function useShowSettingsMenu(): boolean {
+  return useModalOpen(ApplicationModal.SETTINGS);
+}
+
+export function useToggleNavMenu(): () => void {
+  return useToggleModal(ApplicationModal.NAVIGATION);
+}
+
+export function useShowNavMenu(): boolean {
+  return useModalOpen(ApplicationModal.NAVIGATION);
 }
 
 // returns a function that allows adding a popup
