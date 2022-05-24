@@ -41,8 +41,13 @@ const NavMenu: React.FC<{}> = () => {
         open={open}
         onOpen={toggleNavMenu}
         onClose={toggleNavMenu}
+        PaperProps={{
+          sx: {
+            width: 280
+          }
+        }}
       >
-        <Container maxWidth="xs">
+        <Container>
           <List component="nav">
             <Offset />
             <Divider />

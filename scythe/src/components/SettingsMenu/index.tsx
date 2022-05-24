@@ -3,6 +3,8 @@ import {
   Box,
   Divider,
   IconButton,
+  Link,
+  MenuItem,
   Stack,
   Typography,
   useTheme,
@@ -60,7 +62,11 @@ export default function SettingsMenu() {
 
         <Divider sx={{ borderStyle: "dashed" }} />
 
-        <Stack sx={{ p: 1 }}></Stack>
+        <Stack sx={{ p: 1 }}>
+          <MenuItem href={"/account/settings"} component={Link} onClick={handleClose}>
+            Settings
+          </MenuItem>
+        </Stack>
       </MenuPopover>
     </>
   );
