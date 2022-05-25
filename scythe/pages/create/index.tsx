@@ -1,10 +1,18 @@
-import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Container,
+  Grid,
+  Paper,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
 import { useUser } from "../../src/state/authentication/hooks";
 
-const Dashboard: NextPage = () => {
+const Create: NextPage = () => {
   const theme = useTheme();
   const { isError } = useUser();
   const router = useRouter();
@@ -28,7 +36,7 @@ const Dashboard: NextPage = () => {
           elevation={3}
         >
           <Typography variant="h4" align="center">
-            Dashboard
+            Create a Guild
           </Typography>
         </Paper>
         <Grid
@@ -39,8 +47,8 @@ const Dashboard: NextPage = () => {
             py: theme.spacing(2),
           }}
         >
-          <Grid item>
-            <Paper
+          <Grid item xs={12} sm={6} md={8}>
+            <Card
               sx={{
                 padding: theme.spacing(1, 1),
                 display: "flex",
@@ -48,10 +56,11 @@ const Dashboard: NextPage = () => {
                 flexWrap: "wrap",
               }}
             >
-              <Typography variant="h4" align="center">
-                No Guilds
-              </Typography>
-            </Paper>
+              <CardHeader
+                title="Getting Started"
+                subtitle="Click here to get started"
+              />
+            </Card>
           </Grid>
         </Grid>
       </Container>
@@ -59,4 +68,4 @@ const Dashboard: NextPage = () => {
   );
 };
 
-export default Dashboard;
+export default Create;

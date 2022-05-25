@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use actix_web::{error::InternalError, web, HttpResponse};
 use serde::{Deserialize, Serialize};
 
-use crate::{configuration::get_configuration, session_state::TypedSession, utils::see_other};
+use crate::{session_state::TypedSession, utils::see_other};
+use shared::configuration::get_configuration;
 use actix_web::http::header::LOCATION;
 
 // https://developers.google.com/identity/protocols/oauth2/web-server#example

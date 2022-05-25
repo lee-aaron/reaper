@@ -64,10 +64,19 @@ const NavMenu: React.FC<{}> = () => {
               component="a"
               onClick={() => {
                 toggleNavMenu();
+                router.push("/create");
+              }}
+            >
+              <ListItemText primary="Create a Guild" />
+            </ListItemButton>
+            <ListItemButton
+              component="a"
+              onClick={() => {
+                toggleNavMenu();
                 router.push("/subscribe");
               }}
             >
-              <ListItemText primary="Subscribe" />
+              <ListItemText primary="Subscribe to a Guild" />
             </ListItemButton>
             <ListItemButton
               component="a"

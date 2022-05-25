@@ -1,0 +1,7 @@
+use shared::configuration::*;
+
+fn main() {
+    env_logger::init();
+
+    println!("Hello, world!");
+}

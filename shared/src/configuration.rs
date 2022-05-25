@@ -60,7 +60,8 @@ pub struct DiscordSettings {
     pub client_secret: String,
     pub grant_type: String,
     pub redirect_uri: String,
-    pub frontend_uri: String
+    pub frontend_uri: String,
+    pub bot_uri: String
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

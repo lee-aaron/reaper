@@ -20,7 +20,7 @@ const Home: NextPage = () => {
           elevation={3}
         >
           <Typography variant="h4" align="center">
-            Welcome to Reaper!
+            Welcome to Guilds.gg!
           </Typography>
           <Typography
             sx={{ mt: theme.spacing(2) }}

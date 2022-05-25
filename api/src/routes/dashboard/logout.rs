@@ -1,4 +1,4 @@
-use crate::configuration::get_configuration;
+use shared::configuration::get_configuration;
 use crate::session_state::TypedSession;
 use crate::utils::{e500, see_other};
 use actix_web::HttpResponse;

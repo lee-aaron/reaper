@@ -1,7 +1,7 @@
-use reaper::startup::Application;
+use guilds::startup::Application;
 use std::fmt::{Debug, Display};
 use tokio::task::JoinError;
-use reaper::configuration::get_configuration;
+use shared::configuration::get_configuration;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {

@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
 use crate::authentication::reject_anonymous_users;
-use crate::configuration::{DatabaseSettings, Settings};
+use shared::configuration::{DatabaseSettings, Settings};
 use crate::routes::*;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
