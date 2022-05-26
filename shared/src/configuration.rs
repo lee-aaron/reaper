@@ -10,6 +10,8 @@ pub struct Settings {
     pub application: ApplicationSettings,
     pub redis_uri: Secret<String>,
     pub discord: DiscordSettings,
+    pub stripe: StripeSettings,
+    pub payments: PaymentsSettings
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -61,7 +63,19 @@ pub struct DiscordSettings {
     pub grant_type: String,
     pub redirect_uri: String,
     pub frontend_uri: String,
-    pub bot_uri: String
+    pub bot_uri: String,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct StripeSettings {
+    pub secret_key: String,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct PaymentsSettings {
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub port: u16,
+    pub host: String,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

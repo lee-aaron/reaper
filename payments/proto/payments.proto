@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package payments_v1;
+
+service CustomerHandler {
+
+}
+
+service PortalHandler {
+  
+}

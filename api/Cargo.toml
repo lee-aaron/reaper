@@ -16,7 +16,6 @@ chrono = '0.4.15'
 log = '0.4'
 prost = '0.10'
 prost-types = '0.10'
-tonic-web = '0.3.0'
 actix-web = '4.0'
 actix-files = '0.6'
 anyhow = '1.0.40'
@@ -32,22 +31,17 @@ actix-web-lab = '0.15'
 reqwest = '0.11.10'
 base64 = '0.13.0'
 shared = { path = "../shared" }
+payments-server = { path = "../payments" }
+tonic = "0.6"
 
 [dependencies.tokio]
-version = '1.0'
+version = '1.18.2'
 features = [
     'rt-multi-thread',
     'macros',
     'sync',
     'time',
     'fs',
-]
-
-[dependencies.tonic]
-verison = '0.7.2'
-features = [
-    'tls',
-    'compression',
 ]
 
 [dependencies.actix-session]
@@ -100,9 +94,6 @@ features = [
 [dependencies.actix-web-flash-messages]
 version = '0.3'
 features = ['cookies']
+
 [build-dependencies.tonic-build]
-version = '0.7.0'
-features = [
-    'prost',
-    'compression',
-]
+version = '0.6'
