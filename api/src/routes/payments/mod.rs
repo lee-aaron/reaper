@@ -1,4 +1,5 @@
 mod payment;
+mod customer_client;
 
 use payment::*;
-use payments_server::*;
+use customer_client::*;
