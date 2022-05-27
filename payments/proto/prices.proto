@@ -23,17 +23,7 @@ message GetPriceReply {
   int64 amount = 4;
 }
 
-message UpdatePriceRequest {
-  string price_id = 1;
-  int64 amount = 2;
-}
-
-message UpdatePriceReply {
-  bool updated = 1;
-}
-
 service PriceHandler {
   rpc CreatePrice(CreatePriceRequest) returns (CreatePriceReply);
   rpc GetPrice(GetPriceRequest) returns (GetPriceReply);
-  rpc UpdatePrice(UpdatePriceRequest) returns (UpdatePriceReply);
 }

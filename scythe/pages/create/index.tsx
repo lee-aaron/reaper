@@ -10,6 +10,7 @@ import {
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
+import Payment from "../../src/components/Payment";
 import { useUser } from "../../src/state/authentication/hooks";
 
 const Create: NextPage = () => {
@@ -60,6 +61,22 @@ const Create: NextPage = () => {
                 title="Getting Started"
                 subtitle="Click here to get started"
               />
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={8}>
+            <Card
+              sx={{
+                padding: theme.spacing(1, 1),
+                display: "flex",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <CardHeader
+                title="Create a Subscription"
+                subtitle="Subscription for Access to your Guild"
+              />
+              <Payment />
             </Card>
           </Grid>
         </Grid>

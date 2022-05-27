@@ -1,17 +1,19 @@
 use std::net::ToSocketAddrs;
 
-use actix_web::{error::InternalError, web, HttpResponse};
+use actix_web::{web, error::InternalError, HttpResponse};
 use shared::configuration::get_configuration;
 
 use super::{
-    customer_client::{CustomerClient, CustomerInfo},
-    portal_client::PortalClient,
+    customer_client::CustomerClient, portal_client::PortalClient, prices_client::PricesClient,
+    ProductClient,
 };
 
 #[derive(Clone)]
 pub struct Payment {
     pub customer_client: CustomerClient,
     pub portal_client: PortalClient,
+    pub price_client: PricesClient,
+    pub product_client: ProductClient,
 }
 
 impl Payment {
@@ -28,56 +30,44 @@ impl Payment {
         };
         let customer_client = CustomerClient::new(&addr.clone().to_string());
         let portal_client = PortalClient::new(&addr.clone().to_string());
+        let price_client = PricesClient::new(&addr.clone().to_string());
+        let product_client = ProductClient::new(&addr.clone().to_string());
         Payment {
             customer_client,
             portal_client,
+            price_client,
+            product_client,
         }
     }
 }
 
-pub async fn create_customer(
-    customer: web::Json<CustomerInfo>,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<anyhow::Error>> {
-    let mut cus_client = client.customer_client.clone();
-    let result = cus_client
-        .create_customer(customer.0.customer_name, customer.0.customer_email)
-        .await;
-
-    if let Ok(reply) = result {
-        Ok(HttpResponse::Ok().json(reply))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
-    }
+#[derive(serde::Serialize, serde::Deserialize, Clone)]
+pub struct ProductFlow {
+    pub name: String,
+    pub email: String,
+    pub product_name: String,
+    pub description: String,
+    pub price: i64,
 }
 
-pub async fn get_customer(
-    customer_id: String,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<anyhow::Error>> {
-    let mut cus_client = client.customer_client.clone();
-    let result = cus_client.get_customer(customer_id).await;
 
-    if let Ok(reply) = result {
-        Ok(HttpResponse::Ok().json(reply))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
-    }
-}
+pub async fn create_product_flow(
+    query: web::Json<ProductFlow>,
+    payment: web::Data<Payment>,
+) -> Result<HttpResponse, InternalError<tonic::Status>> {
 
-pub async fn delete_customer(
-    customer_id: String,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<anyhow::Error>> {
-    let mut cus_client = client.customer_client.clone();
-    let result = cus_client.delete_customer(customer_id).await;
+    let mut product_client = payment.product_client.clone();
+    let mut price_client = payment.price_client.clone();
 
-    if let Ok(reply) = result {
-        Ok(HttpResponse::Ok().json(reply))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
-    }
+    // update product name to some unique identifier for this user (e.g. email)
+
+    // assert product name does not already exist
+
+    // create product
+
+    // create price
+
+    // update product
+
+    Ok(HttpResponse::Ok().finish())
 }
