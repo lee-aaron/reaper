@@ -1,5 +1,5 @@
 mod payment;
 mod customer_client;
+mod portal_client;
 
-use payment::*;
-use customer_client::*;
+pub use payment::*;

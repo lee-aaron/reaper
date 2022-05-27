@@ -1,7 +1,6 @@
 use std::net::TcpListener;
 
 use crate::authentication::reject_anonymous_users;
-use shared::configuration::{DatabaseSettings, Settings};
 use crate::routes::*;
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
@@ -11,6 +10,7 @@ use actix_web::web::Data;
 use actix_web::{web, App, HttpServer};
 use actix_web_lab::middleware::from_fn;
 use secrecy::{ExposeSecret, Secret};
+use shared::configuration::{DatabaseSettings, Settings};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -71,6 +71,7 @@ async fn run(
     let base_url = Data::new(ApplicationBaseUrl(base_url));
     let secret_key = Key::from(hmac_secret.expose_secret().as_bytes());
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
+    let payment_client = Payment::new();
     let server = HttpServer::new(move || {
         App::new()
             .wrap(SessionMiddleware::new(
@@ -84,11 +85,15 @@ async fn run(
                 web::scope("/v1")
                     .wrap(from_fn(reject_anonymous_users))
                     .route("/user", web::get().to(user))
-                    .route("/logout", web::get().to(log_out)),
+                    .route("/logout", web::get().to(log_out))
+                    .route("/get_customer", web::get().to(get_customer))
+                    .route("/create_customer", web::post().to(create_customer))
+                    .route("/delete_customer", web::delete().to(delete_customer)),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())
             .app_data(Data::new(HmacSecret(hmac_secret.clone())))
+            .app_data(Data::new(payment_client.clone()))
     })
     .listen(listener)?
     .run();

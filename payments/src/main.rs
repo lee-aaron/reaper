@@ -1,4 +1,9 @@
-use payments_server::payments_v1::customer_handler_server::CustomerHandlerServer;
+use payments_server::{
+    payments_v1::{
+        customer_handler_server::CustomerHandlerServer, portal_handler_server::PortalHandlerServer,
+    },
+    portal::BillingPortal,
+};
 use shared::configuration::*;
 use std::net::ToSocketAddrs;
 
@@ -35,9 +40,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cust_service = Customer {
         client: client.clone(),
     };
+    let portal_service = BillingPortal {
+        client: client.clone(),
+    };
 
     Server::builder()
         .add_service(CustomerHandlerServer::new(cust_service))
+        .add_service(PortalHandlerServer::new(portal_service))
         .serve_with_incoming(incoming)
         .await?;
 

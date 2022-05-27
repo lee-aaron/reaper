@@ -8,12 +8,11 @@ import {
   Toolbar,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import Link from "next/link";
 import { NextRouter, withRouter } from "next/router";
 import React from "react";
-import { useToggleNavMenu } from "../../state/application/hooks";
 import { useUser } from "../../state/authentication/hooks";
 import NavMenu from "../NavMenu";
 import SettingsMenu from "../SettingsMenu";
@@ -25,7 +24,6 @@ interface Props {
 
 const Header: React.FC<Props> = (props: Props) => {
   const theme = useTheme();
-  const toggleNavMenu = useToggleNavMenu();
   const { isError } = useUser();
 
   return (

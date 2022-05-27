@@ -20,11 +20,16 @@ message CustomerGetReply {
   string customer_email = 2;
 }
 
+message CustomerDeleteRequest {
+  string customer_id = 1;
+}
+
+message CustomerDeleteReply {
+  bool deleted = 1;
+}
+
 service CustomerHandler {
   rpc CreateCustomer(CustomerCreateRequest) returns (CustomerCreateReply);
   rpc GetCustomer(CustomerGetRequest) returns (CustomerGetReply);
-}
-
-service PortalHandler {
-  
+  rpc DeleteCustomer(CustomerDeleteRequest) returns (CustomerDeleteReply);
 }

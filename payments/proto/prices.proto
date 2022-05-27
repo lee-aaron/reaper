@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package payments_v1;
+
+message CreatePriceRequest {
+  string currency = 1;
+  string product = 2;
+  int64 amount = 3;
+}
+
+message CreatePriceReply {
+  string price_id = 1;
+}
+
+message GetPriceRequest {
+  string price_id = 1;
+}
+
+message GetPriceReply {
+  string price_id = 1;
+  string currency = 2;
+  string product = 3;
+  int64 amount = 4;
+}
+
+message UpdatePriceRequest {
+  string price_id = 1;
+  int64 amount = 2;
+}
+
+message UpdatePriceReply {
+  bool updated = 1;
+}
+
+service PriceHandler {
+  rpc CreatePrice(CreatePriceRequest) returns (CreatePriceReply);
+  rpc GetPrice(GetPriceRequest) returns (GetPriceReply);
+  rpc UpdatePrice(UpdatePriceRequest) returns (UpdatePriceReply);
+}

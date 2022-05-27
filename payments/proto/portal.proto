@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package payments_v1;
+
+message PortalCreateRequest {
+  string customer_id = 1;
+  string return_url = 2;
+}
+
+message PortalCreateReply {
+  string portal_url = 1;
+}
+
+service PortalHandler {
+  rpc CreatePortal(PortalCreateRequest) returns (PortalCreateReply);
+}

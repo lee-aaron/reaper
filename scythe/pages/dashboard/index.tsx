@@ -2,6 +2,7 @@ import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
+import Payment from "../../src/components/Payment";
 import { useUser } from "../../src/state/authentication/hooks";
 
 const Dashboard: NextPage = () => {
@@ -54,6 +55,7 @@ const Dashboard: NextPage = () => {
             </Paper>
           </Grid>
         </Grid>
+        <Payment />
       </Container>
     </React.Fragment>
   );
