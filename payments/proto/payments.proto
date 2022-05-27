@@ -2,8 +2,27 @@ syntax = "proto3";
 
 package payments_v1;
 
-service CustomerHandler {
+message CustomerCreateRequest {
+  string customer_name = 1;
+  string customer_email = 2;
+}
 
+message CustomerCreateReply {
+  string customer_id = 1;
+}
+
+message CustomerGetRequest {
+  string customer_id = 1;
+}
+
+message CustomerGetReply {
+  string customer_name = 1;
+  string customer_email = 2;
+}
+
+service CustomerHandler {
+  rpc CreateCustomer(CustomerCreateRequest) returns (CustomerCreateReply);
+  rpc GetCustomer(CustomerGetRequest) returns (CustomerGetReply);
 }
 
 service PortalHandler {

@@ -33,7 +33,7 @@ reqwest = '0.11.10'
 base64 = '0.13.0'
 shared = { path = "../shared" }
 payments-server = { path = "../payments" }
-tonic = "0.6"
+tonic = "0.7.2"
 
 [dependencies.tokio]
 version = '1.18.2'
@@ -97,4 +97,4 @@ version = '0.3'
 features = ['cookies']
 
 [build-dependencies.tonic-build]
-version = '0.6'
+version = '0.7.2'

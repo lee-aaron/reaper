@@ -15,6 +15,3 @@ pub async fn temp(session: TypedSession) -> Result<HttpResponse, actix_web::Erro
 }
 
 pub struct Payment {}
-
-#[async_trait::async_trait]
-impl CustomerHandler for Payment {}

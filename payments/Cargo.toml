@@ -25,7 +25,7 @@ tracing-bunyan-formatter = '0.3'
 tracing-log = '0.1.1'
 shared = { path = "../shared" }
 anyhow = '1.0.40'
-tonic = "0.6"
+tonic = "0.7.2"
 tokio-stream = { version = "0.1.8", features = ["net"] }
 
 [dependencies.tokio]
@@ -39,4 +39,4 @@ features = [
 ]
 
 [build-dependencies.tonic-build]
-version = '0.6'
+version = '0.7.2'

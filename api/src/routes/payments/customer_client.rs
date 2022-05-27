@@ -28,6 +28,6 @@ impl CustomerClient {
         let client = CustomerHandlerClient::new(channel.clone());
         Ok(CustomerClient { client })
     }
-}
 
-// Trait def that the api gateway will call
+    // Client side calls
+}
