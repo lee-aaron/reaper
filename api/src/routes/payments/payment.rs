@@ -1,6 +1,6 @@
 use std::net::ToSocketAddrs;
 
-use actix_web::{web, error::InternalError, HttpResponse};
+use actix_web::{error::InternalError, web, HttpResponse};
 use shared::configuration::get_configuration;
 
 use super::{
@@ -50,18 +50,16 @@ pub struct ProductFlow {
     pub price: i64,
 }
 
-
 pub async fn create_product_flow(
     query: web::Json<ProductFlow>,
     payment: web::Data<Payment>,
 ) -> Result<HttpResponse, InternalError<tonic::Status>> {
-
     let mut product_client = payment.product_client.clone();
     let mut price_client = payment.price_client.clone();
 
-    // update product name to some unique identifier for this user (e.g. email)
+    // create metadata for product
 
-    // assert product name does not already exist
+    // assert each discord server only has < 5 products
 
     // create product
 

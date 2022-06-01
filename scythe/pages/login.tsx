@@ -52,7 +52,7 @@ const Login: NextPage = () => {
               }}
             >
               <Button
-                href="https://discord.com/api/oauth2/authorize?client_id=966453809335382106&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Flogin&response_type=code&scope=identify%20email"
+                href="/api/login"
                 sx={{
                   padding: theme.spacing(1, 1),
                 }}

@@ -4,23 +4,25 @@ use actix_web::{error::InternalError, web, HttpResponse};
 use serde::{Deserialize, Serialize};
 
 use crate::{session_state::TypedSession, utils::see_other};
-use shared::configuration::get_configuration;
 use actix_web::http::header::LOCATION;
+use shared::configuration::get_configuration;
 
 // https://developers.google.com/identity/protocols/oauth2/web-server#example
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormData {
     code: Option<String>,
+    error: Option<String>,
+    error_description: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DiscordResponse {
-    access_token: String,
-    expires_in: u64,
-    token_type: String,
-    refresh_token: String,
-    scope: String,
+    pub access_token: String,
+    pub expires_in: u64,
+    pub token_type: String,
+    pub refresh_token: String,
+    pub scope: String,
 }
 
 pub async fn login(
@@ -29,9 +31,15 @@ pub async fn login(
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     // if credentials are not available, redirect to OAUTH API
     let configuration = get_configuration().expect("Failed to read configuration");
+
+    if form.error.is_some() && form.error_description.is_some() {
+        let e = LoginError::UnexpectedError(anyhow::anyhow!(form.0.error_description.unwrap()));
+        return Err(login_redirect(e));
+    }
+
     if form.code.is_none() {
         let discord_uri = format!(
-            "https://discordapp.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify",
+            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify%20email%20guilds",
             configuration.discord.client_id,
             configuration.discord.redirect_uri
         );
@@ -46,7 +54,7 @@ pub async fn login(
         map.insert("redirect_uri", configuration.discord.redirect_uri);
 
         match reqwest::Client::new()
-            .post("https://discord.com/api/oauth2/token")
+            .post("https://discord.com/api/v10/oauth2/token")
             .form(&map)
             .send()
             .await
@@ -80,8 +88,12 @@ pub async fn login(
 }
 
 fn login_redirect(e: LoginError) -> InternalError<LoginError> {
+    let configuration = get_configuration().expect("Failed to read configuration");
     let response = HttpResponse::SeeOther()
-        .insert_header((LOCATION, "/api/login"))
+        .insert_header((
+            LOCATION,
+            format!("{}/{}", &configuration.discord.frontend_uri, "/login"),
+        ))
         .finish();
     InternalError::from_response(e, response)
 }

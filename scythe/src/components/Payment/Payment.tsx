@@ -14,7 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import { loadStripe } from "@stripe/stripe-js";
-import React from "react";
+import React, { useEffect } from "react";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
@@ -22,6 +22,7 @@ const Payment: React.FC<{}> = () => {
   const theme = useTheme();
   const [amountError, setAmountError] = React.useState(false);
   const [form, setForm] = React.useState<any>();
+
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -131,6 +132,7 @@ const Payment: React.FC<{}> = () => {
                 ) : null}
               </FormControl>
             </Grid>
+            <Grid item xl={1}></Grid>
             <Grid item xl={2}>
               <Box
                 sx={{
