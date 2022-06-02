@@ -21,7 +21,7 @@ pub async fn get_guilds(
                 .text()
                 .await
                 .map_err(|e| handle_error(anyhow::Error::new(e)))?;
-            Ok(HttpResponse::Ok().json(body))
+            Ok(HttpResponse::Ok().content_type("application/json").body(body))
         }
         Err(e) => Err(handle_error(anyhow::Error::new(e))),
     }

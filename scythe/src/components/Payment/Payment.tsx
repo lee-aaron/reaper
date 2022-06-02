@@ -1,20 +1,24 @@
 import {
   Box,
   Button,
-  Checkbox,
   Container,
   FormControl,
-  FormControlLabel,
   FormHelperText,
   Grid,
   Input,
   InputAdornment,
   InputLabel,
+  MenuItem,
+  Select,
+  SelectChangeEvent,
   TextField,
   useTheme,
 } from "@mui/material";
 import { loadStripe } from "@stripe/stripe-js";
 import React, { useEffect } from "react";
+import { GetGuilds } from "../../state/discord/actions";
+import { useAdminGuilds } from "../../state/discord/hooks";
+import { useAppDispatch } from "../../state/hooks";
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
@@ -22,7 +26,13 @@ const Payment: React.FC<{}> = () => {
   const theme = useTheme();
   const [amountError, setAmountError] = React.useState(false);
   const [form, setForm] = React.useState<any>();
+  const [discord, setDiscord] = React.useState<string>("");
+  const dispatch = useAppDispatch();
+  const guilds = useAdminGuilds();
 
+  useEffect(() => {
+    dispatch(GetGuilds());
+  }, [dispatch]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -53,6 +63,10 @@ const Payment: React.FC<{}> = () => {
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.currentTarget;
     setForm({ ...form, [id]: value });
+  };
+
+  const handleSelectChange = (event: SelectChangeEvent) => {
+    setDiscord(event.target.value as string);
   };
 
   return (
@@ -132,7 +146,24 @@ const Payment: React.FC<{}> = () => {
                 ) : null}
               </FormControl>
             </Grid>
-            <Grid item xl={1}></Grid>
+            <Grid item xl={1}>
+              <FormControl fullWidth variant="standard">
+                <InputLabel id="target_server">Discord Server</InputLabel>
+                <Select
+                  labelId="target_server"
+                  id="target_server"
+                  value={discord}
+                  onChange={handleSelectChange}
+                  required
+                >
+                  {guilds.map((guild) => (
+                    <MenuItem key={guild.id} value={guild.id}>
+                      {guild.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
             <Grid item xl={2}>
               <Box
                 sx={{

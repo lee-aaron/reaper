@@ -1,8 +1,9 @@
-import { useAppDispatch, useAppSelector } from "../hooks";
-import { AuthStatus } from "./reducer";
-import useSWR from "swr";
-import { loginAuthentication } from "./actions";
 import { useEffect } from "react";
+import useSWR from "swr";
+import { AppDispatch } from "..";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import { loginAuthentication, loginRequest, logoutRequest } from "./actions";
+import { AuthStatus } from "./reducer";
 
 export function useIsAuthenticated(): boolean {
   const isAuthenticated = useAppSelector(

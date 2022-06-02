@@ -1,7 +1,6 @@
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 import { shallowEqual } from "react-redux";
 import { useAppDispatch, useAppSelector } from "../hooks";
-import { AppState } from "../index";
 import { updateUserDarkMode } from "./actions";
 
 export function useIsDarkMode(): boolean {

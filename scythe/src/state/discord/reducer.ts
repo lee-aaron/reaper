@@ -1,4 +1,5 @@
 import { createReducer } from "@reduxjs/toolkit";
+import { GetGuilds } from "./actions";
 
 export interface Guild {
   id: string;
@@ -19,10 +20,12 @@ export interface User {
 export interface Discord {
   guilds: Array<Guild>;
   user: User;
+  status: string;
 }
 
 export const initialState: Discord = {
   guilds: [],
+  status: "idle",
   user: {
     id: "",
     username: "",
@@ -32,5 +35,16 @@ export const initialState: Discord = {
 };
 
 export default createReducer(initialState, (builder) => {
-  builder.addCase("", (state) => {});
+  builder
+    .addCase(GetGuilds.pending, (state) => {
+      state.status = "loading";
+    })
+    .addCase(GetGuilds.fulfilled, (state, action) => {
+      // parse payload into array of Guilds
+      state.guilds = action.payload;
+      state.status = "idle";
+    })
+    .addCase(GetGuilds.rejected, (state) => {
+      state.status = "error";
+    });
 });
