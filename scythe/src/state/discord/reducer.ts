@@ -41,10 +41,13 @@ export default createReducer(initialState, (builder) => {
     })
     .addCase(GetGuilds.fulfilled, (state, action) => {
       // parse payload into array of Guilds
-      state.guilds = action.payload;
-      state.status = "idle";
+      if (state.status === "loading") {
+        state.status = "idle";
+        state.guilds = action.payload;
+      }
     })
-    .addCase(GetGuilds.rejected, (state) => {
+    .addCase(GetGuilds.rejected, (state, action) => {
       state.status = "error";
+      state.guilds = [];
     });
 });

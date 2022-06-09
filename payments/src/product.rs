@@ -44,6 +44,7 @@ impl ProductHandler for ProductClient {
 
         let mut product = stripe::CreateProduct::new(&request.name);
         product.description = Some(&request.description);
+        product.metadata = Some(request.metadata);
 
         let result = stripe::Product::create(&self.client, product).await;
         if let Ok(product) = result {

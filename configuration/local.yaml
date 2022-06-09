@@ -8,6 +8,6 @@ discord:
   client_secret: "A_RnL_ikt2SF6bZ1lyGJhgdKPeQz3hof"
   grant_type: "authorization_code"
   redirect_uri: "http://localhost:3000/api/login"
-  frontend_uri: "http://localhost:3000/"
+  frontend_uri: "http://localhost:3000"
 stripe:
   secret_key: "sk_test_7YRSRbVKSQDOG5eFwGhmyNbb008VJ25gVL"

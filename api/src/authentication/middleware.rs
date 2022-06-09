@@ -5,7 +5,7 @@ use actix_web::{
 };
 use actix_web_lab::middleware::Next;
 
-use crate::{session_state::TypedSession, utils::e500};
+use crate::{session_state::TypedSession, utils::{e500, e401}};
 
 pub async fn reject_anonymous_users(
     mut req: ServiceRequest,
@@ -23,7 +23,7 @@ pub async fn reject_anonymous_users(
         }
         None => {
             let e = anyhow::anyhow!("The user has not logged in");
-            Err(e500(e))
+            Err(e401(e))
         }
     }
 }

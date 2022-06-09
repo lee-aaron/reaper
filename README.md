@@ -11,6 +11,9 @@ Serve front end from backend
 ```
 Exposes /api endpoint for login, signup, etc
 Use OAuth2 for Discord Login
+
+RUST_LOG=debug cargo watch -w 'api' -x 'run --guilds'
+RUST_LOG=debug cargo watch -w 'payments' -x 'run --bin payments'
 ```
 
 ## Microservices

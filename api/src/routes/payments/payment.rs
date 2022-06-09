@@ -1,6 +1,7 @@
-use std::net::ToSocketAddrs;
+use std::{collections::HashMap, net::ToSocketAddrs};
 
 use actix_web::{error::InternalError, web, HttpResponse};
+use payments_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
 use shared::configuration::get_configuration;
 
 use super::{
@@ -41,13 +42,14 @@ impl Payment {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct ProductFlow {
     pub name: String,
     pub email: String,
     pub product_name: String,
     pub description: String,
     pub price: i64,
+    pub target_server: String,
 }
 
 pub async fn create_product_flow(
@@ -57,15 +59,43 @@ pub async fn create_product_flow(
     let mut product_client = payment.product_client.clone();
     let mut price_client = payment.price_client.clone();
 
-    // create metadata for product
-
-    // assert each discord server only has < 5 products
+    // assert each discord server only has < 3 products
+    // store in postgres db discord server id -> num products
 
     // create product
+    // create metadata for product
+    let mut metadata = HashMap::new();
+    metadata.insert("email".to_string(), query.0.email.clone());
+    metadata.insert("discord_server_id".to_string(), query.0.target_server.clone());
+
+    let res = product_client
+        .client
+        .create_product(CreateProductRequest {
+            name: query.0.product_name.clone(),
+            description: query.0.description.clone(),
+            metadata,
+        })
+        .await;
+
+    if let Err(e) = res {
+        let response = HttpResponse::InternalServerError().finish();
+        return Err(InternalError::from_response(e, response));
+    }
 
     // create price
+    let res = price_client
+        .client
+        .create_price(CreatePriceRequest {
+            currency: "USD".to_string(),
+            amount: query.0.price.checked_mul(100).unwrap(),
+            product: res.ok().unwrap().into_inner().id,
+        })
+        .await;
 
-    // update product
+    if let Err(e) = res {
+        let response = HttpResponse::InternalServerError().finish();
+        return Err(InternalError::from_response(e, response));
+    }
 
     Ok(HttpResponse::Ok().finish())
 }

@@ -1,21 +1,37 @@
-import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { AppState } from "..";
+import { AuthStatus } from "./reducer";
 
-export const loginAuthentication = createAction("auth/login");
-
-export const logoutAuthentication = createAction("auth/logout");
-
-export const loginRequest = createAsyncThunk("auth/loginRequest", async () => {
-  const res = await fetch("/api/v1/user").catch((e) => e);
-  if (res.status !== 200) {
-    throw new Error(res.statusText);
+export const loginRequest = createAsyncThunk(
+  "auth/loginRequest",
+  async (_, thunkAPI) => {
+    try {
+      const res = await fetch("/api/v1/user", {
+        signal: thunkAPI.signal
+      });
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return true;
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
   }
-  return await res.json();
-});
+);
 
-export const logoutRequest = createAsyncThunk("auth/logoutRequest", async () => {
-  const res = await fetch("/api/v1/logout").catch((e) => e);
-  if (res.status !== 200) {
-    throw new Error(res.statusText);
+export const logoutRequest = createAsyncThunk(
+  "auth/logoutRequest",
+  async (_, thunkAPI) => {
+    try {
+      const res = await fetch("/api/v1/logout", {
+        signal: thunkAPI.signal
+      });
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return true;
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
   }
-  return await res.json();
-});
+);

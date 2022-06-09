@@ -40,28 +40,6 @@ impl ProductClient {
     }
 }
 
-pub async fn create_product(
-    product: web::Json<ProductInfo>,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<tonic::Status>> {
-    let mut prd_client = client.product_client.clone();
-    let result = prd_client
-        .client
-        .create_product(CreateProductRequest {
-            name: product.0.name,
-            description: product.0.description,
-        })
-        .await;
-
-    if let Ok(reply) = result {
-        let reply = reply.into_inner();
-        Ok(HttpResponse::Ok().json(reply.id))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
-    }
-}
-
 pub async fn get_product(
     product: web::Query<ProductInfo>,
     client: web::Data<Payment>,

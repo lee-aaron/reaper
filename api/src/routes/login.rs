@@ -69,7 +69,7 @@ pub async fn login(
                         .insert_discord_oauth(discord_response)
                         .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
                     Ok(see_other(
-                        format!("{}/{}", &configuration.discord.frontend_uri, "/dashboard")
+                        format!("{}{}", &configuration.discord.frontend_uri, "/dashboard")
                             .as_str(),
                     ))
                 } else {
@@ -92,7 +92,7 @@ fn login_redirect(e: LoginError) -> InternalError<LoginError> {
     let response = HttpResponse::SeeOther()
         .insert_header((
             LOCATION,
-            format!("{}/{}", &configuration.discord.frontend_uri, "/login"),
+            format!("{}{}", &configuration.discord.frontend_uri, "/login"),
         ))
         .finish();
     InternalError::from_response(e, response)

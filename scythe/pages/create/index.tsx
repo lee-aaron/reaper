@@ -11,14 +11,14 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
 import Payment from "../../src/components/Payment";
-import { useUser } from "../../src/state/authentication/hooks";
+import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 const Create: NextPage = () => {
   const theme = useTheme();
-  const { isError } = useUser();
+  const isAuthenticated = useIsAuthenticated();
   const router = useRouter();
 
-  if (isError) {
+  if (!isAuthenticated) {
     router.push("/login");
   }
 
@@ -58,9 +58,10 @@ const Create: NextPage = () => {
               }}
             >
               <CardHeader
-                title="Getting Started"
-                subtitle="Click here to get started"
+                title="Create a Subscription"
+                subtitle="Subscription for Access to your Guild"
               />
+              <Payment />
             </Card>
           </Grid>
           <Grid item xs={12} sm={6} md={8}>
@@ -73,10 +74,9 @@ const Create: NextPage = () => {
               }}
             >
               <CardHeader
-                title="Create a Subscription"
-                subtitle="Subscription for Access to your Guild"
+                title="List of Subscriptions"
+                subtitle="Click here to get started"
               />
-              <Payment />
             </Card>
           </Grid>
         </Grid>

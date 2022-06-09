@@ -26,7 +26,7 @@ const Payment: React.FC<{}> = () => {
   const theme = useTheme();
   const [amountError, setAmountError] = React.useState(false);
   const [form, setForm] = React.useState<any>();
-  const [discord, setDiscord] = React.useState<string>("");
+  const [discord_id, setDiscord] = React.useState<string>("");
   const dispatch = useAppDispatch();
   const guilds = useAdminGuilds();
 
@@ -50,8 +50,11 @@ const Payment: React.FC<{}> = () => {
       },
       body: JSON.stringify({
         name: form.productName,
+        email: form.email,
+        product_name: form.productName,
         description: form.productDescription,
-        amount: form.productAmount,
+        price: Number(form.productAmount),
+        target_server: discord_id,
       }),
     })
       .then((res) => {
@@ -152,7 +155,7 @@ const Payment: React.FC<{}> = () => {
                 <Select
                   labelId="target_server"
                   id="target_server"
-                  value={discord}
+                  value={discord_id}
                   onChange={handleSelectChange}
                   required
                 >

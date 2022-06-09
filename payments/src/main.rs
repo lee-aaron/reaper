@@ -1,13 +1,15 @@
 use payments_server::{
+    customer::Customer,
     payments_v1::{
         customer_handler_server::CustomerHandlerServer, portal_handler_server::PortalHandlerServer,
+        price_handler_server::PriceHandlerServer, product_handler_server::ProductHandlerServer,
     },
     portal::BillingPortal,
+    prices::PricesClient,
+    product::ProductClient,
 };
 use shared::configuration::*;
 use std::net::ToSocketAddrs;
-
-use payments_server::customer::Customer;
 
 use tokio::net::TcpListener;
 use tokio_stream::wrappers::TcpListenerStream;
@@ -43,10 +45,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let portal_service = BillingPortal {
         client: client.clone(),
     };
+    let prod_service = ProductClient {
+        client: client.clone(),
+    };
+    let price_service = PricesClient {
+        client: client.clone(),
+    };
 
     Server::builder()
         .add_service(CustomerHandlerServer::new(cust_service))
         .add_service(PortalHandlerServer::new(portal_service))
+        .add_service(ProductHandlerServer::new(prod_service))
+        .add_service(PriceHandlerServer::new(price_service))
         .serve_with_incoming(incoming)
         .await?;
 

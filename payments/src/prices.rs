@@ -1,4 +1,4 @@
-use stripe::{CreatePrice, Currency, PriceId, ProductId};
+use stripe::{CreatePrice, Currency, PriceId, ProductId, CreatePriceRecurring};
 
 use crate::payments_v1::{price_handler_server::PriceHandler, *};
 
@@ -24,6 +24,12 @@ impl PriceHandler for PricesClient {
         let mut create_price = CreatePrice::new(Currency::USD);
         create_price.product = Some(stripe::IdOrCreate::Id(&prod_id));
         create_price.unit_amount = Some(request.amount);
+        create_price.recurring = Some(CreatePriceRecurring {
+            aggregate_usage: None,
+            interval: stripe::CreatePriceRecurringInterval::Month,
+            interval_count: Some(1),
+            usage_type: Some(stripe::CreatePriceRecurringUsageType::Licensed),
+        });
 
         let result = stripe::Price::create(&self.client, create_price).await;
         if let Ok(price) = result {

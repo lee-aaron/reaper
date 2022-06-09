@@ -2,14 +2,14 @@ import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { useUser } from "../../src/state/authentication/hooks";
+import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 const Dashboard: NextPage = () => {
   const theme = useTheme();
-  const { isError } = useUser();
+  const isAuthenticated = useIsAuthenticated();
   const router = useRouter();
 
-  if (isError) {
+  if (!isAuthenticated) {
     router.push("/login");
   }
 

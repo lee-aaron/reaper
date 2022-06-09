@@ -90,6 +90,7 @@ async fn run(
                     .route("/create_customer", web::post().to(create_customer))
                     .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/get_guilds", web::get().to(get_guilds))
+                    .route("/create_product", web::post().to(create_product_flow))
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

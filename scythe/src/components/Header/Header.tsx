@@ -12,8 +12,10 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import { NextRouter, withRouter } from "next/router";
-import React from "react";
-import { useUser } from "../../state/authentication/hooks";
+import React, { useCallback } from "react";
+import { logoutRequest } from "../../state/authentication/actions";
+import { useIsAuthenticated } from "../../state/authentication/hooks";
+import { useAppDispatch } from "../../state/hooks";
 import NavMenu from "../NavMenu";
 import SettingsMenu from "../SettingsMenu";
 
@@ -24,13 +26,18 @@ interface Props {
 
 const Header: React.FC<Props> = (props: Props) => {
   const theme = useTheme();
-  const { isError } = useUser();
+  const isAuthenticated = useIsAuthenticated();
+  const dispatch = useAppDispatch();
+
+  const handleLogoutUser = useCallback(() => {
+    dispatch(logoutRequest());
+  }, [dispatch]);
 
   return (
     <React.Fragment>
       <AppBar position="static">
         <Toolbar>
-          {!isError ? <NavMenu /> : null}
+          {isAuthenticated ? <NavMenu /> : null}
           <Typography
             sx={{ flexGrow: 1, cursor: "pointer", paddingLeft: 1 }}
             variant="h4"
@@ -48,10 +55,10 @@ const Header: React.FC<Props> = (props: Props) => {
             </IconButton>
           </Tooltip>
           <IconButton>
-            {!isError ? (
-              <Link href="/api/v1/logout">
+            {isAuthenticated ? (
+              <Link href="/login">
                 <Tooltip title="Logout">
-                  <LogoutIcon />
+                  <LogoutIcon onClick={handleLogoutUser}/>
                 </Tooltip>
               </Link>
             ) : (

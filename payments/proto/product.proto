@@ -5,6 +5,7 @@ package payments_v1;
 message CreateProductRequest {
   string name = 1;
   string description = 2;
+  map <string, string> metadata = 3;
 }
 
 message CreateProductReply {
