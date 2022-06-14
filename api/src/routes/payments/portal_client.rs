@@ -1,4 +1,4 @@
-use payments_server::payments_v1::{
+use stripe_server::payments_v1::{
     portal_handler_client::PortalHandlerClient, PortalCreateRequest,
 };
 use tonic::transport::{Channel, Uri};

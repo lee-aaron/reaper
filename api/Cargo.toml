@@ -32,7 +32,7 @@ actix-web-lab = '0.15'
 reqwest = '0.11.10'
 base64 = '0.13.0'
 shared = { path = "../shared" }
-payments-server = { path = "../payments" }
+stripe-server = { path = "../stripe" }
 tonic = "0.7.2"
 
 [dependencies.tokio]

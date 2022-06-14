@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use actix_web::{error::InternalError, web, HttpResponse};
-use payments_server::payments_v1::{price_handler_client::PriceHandlerClient, *};
+use stripe_server::payments_v1::{price_handler_client::PriceHandlerClient, *};
 use tonic::transport::{Channel, Uri};
 
 use super::Payment;
@@ -52,6 +54,7 @@ pub async fn create_price(
             product: query.0.product_id,
             amount: query.0.price,
             currency: "USD".to_string(),
+            metadata: HashMap::new()
         })
         .await;
 

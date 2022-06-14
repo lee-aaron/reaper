@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package payments_v1;
 
+option go_package = "github.com/lee-aaron/stripe-go/product";
+
 message CreateProductRequest {
   string name = 1;
   string description = 2;
@@ -39,9 +41,28 @@ message UpdateProductReply {
   bool updated = 1;
 }
 
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  map <string, string> metadata = 4;
+  int64 amount = 5;
+}
+
+message SearchProductRequest {
+  string query = 1;
+  optional int64 limit = 2;
+  optional string page = 3;
+}
+
+message SearchProductReply {
+  repeated Product products = 1;
+}
+
 service ProductHandler {
   rpc CreateProduct(CreateProductRequest) returns (CreateProductReply);
   rpc GetProduct(GetProductRequest) returns (GetProductReply);
   rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductReply);
   rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductReply);
+  rpc SearchProduct(SearchProductRequest) returns (SearchProductReply);
 }

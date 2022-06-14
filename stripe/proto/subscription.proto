@@ -1,0 +1,5 @@
+syntax = "proto3";
+
+package payments_v1;
+
+option go_package = "github.com/lee-aaron/stripe-go/subscription";

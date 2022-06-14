@@ -8,11 +8,20 @@ import {
 } from "@mui/material";
 import type { NextPage } from "next";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import React from "react";
 import discord from "../public/discord_logo_small.svg";
+import { useIsAuthenticated } from "../src/state/authentication/hooks";
 
 const Login: NextPage = () => {
   const theme = useTheme();
+
+  const isAuthenticated = useIsAuthenticated();
+  const router = useRouter();
+
+  if (isAuthenticated) {
+    router.push("/dashboard");
+  }
 
   return (
     <React.Fragment>

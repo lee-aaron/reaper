@@ -1,8 +1,8 @@
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     tonic_build::configure()
-        .build_server(true)
         .build_client(true)
         .out_dir("src")
+        .type_attribute(".payments_v1.Product", "#[derive(serde::Serialize, serde::Deserialize)]")
         .compile(
             &[
                 "proto/customer.proto",

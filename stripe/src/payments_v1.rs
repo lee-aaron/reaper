@@ -667,6 +667,34 @@ pub struct UpdateProductReply {
     #[prost(bool, tag="1")]
     pub updated: bool,
 }
+#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct Product {
+    #[prost(string, tag="1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(map="string, string", tag="4")]
+    pub metadata: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
+    #[prost(int64, tag="5")]
+    pub amount: i64,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchProductRequest {
+    #[prost(string, tag="1")]
+    pub query: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag="2")]
+    pub limit: ::core::option::Option<i64>,
+    #[prost(string, optional, tag="3")]
+    pub page: ::core::option::Option<::prost::alloc::string::String>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SearchProductReply {
+    #[prost(message, repeated, tag="1")]
+    pub products: ::prost::alloc::vec::Vec<Product>,
+}
 /// Generated client implementations.
 pub mod product_handler_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -807,6 +835,25 @@ pub mod product_handler_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn search_product(
+            &mut self,
+            request: impl tonic::IntoRequest<super::SearchProductRequest>,
+        ) -> Result<tonic::Response<super::SearchProductReply>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/payments_v1.ProductHandler/SearchProduct",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -832,6 +879,10 @@ pub mod product_handler_server {
             &self,
             request: tonic::Request<super::UpdateProductRequest>,
         ) -> Result<tonic::Response<super::UpdateProductReply>, tonic::Status>;
+        async fn search_product(
+            &self,
+            request: tonic::Request<super::SearchProductRequest>,
+        ) -> Result<tonic::Response<super::SearchProductReply>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct ProductHandlerServer<T: ProductHandler> {
@@ -1038,6 +1089,46 @@ pub mod product_handler_server {
                     };
                     Box::pin(fut)
                 }
+                "/payments_v1.ProductHandler/SearchProduct" => {
+                    #[allow(non_camel_case_types)]
+                    struct SearchProductSvc<T: ProductHandler>(pub Arc<T>);
+                    impl<
+                        T: ProductHandler,
+                    > tonic::server::UnaryService<super::SearchProductRequest>
+                    for SearchProductSvc<T> {
+                        type Response = super::SearchProductReply;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::SearchProductRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move {
+                                (*inner).search_product(request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = SearchProductSvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 _ => {
                     Box::pin(async move {
                         Ok(
@@ -1085,6 +1176,8 @@ pub struct CreatePriceRequest {
     pub product: ::prost::alloc::string::String,
     #[prost(int64, tag="3")]
     pub amount: i64,
+    #[prost(map="string, string", tag="4")]
+    pub metadata: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreatePriceReply {

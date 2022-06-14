@@ -1,7 +1,7 @@
 use std::{collections::HashMap, net::ToSocketAddrs};
 
 use actix_web::{error::InternalError, web, HttpResponse};
-use payments_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
+use stripe_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
 use shared::configuration::get_configuration;
 
 use super::{
@@ -73,7 +73,7 @@ pub async fn create_product_flow(
         .create_product(CreateProductRequest {
             name: query.0.product_name.clone(),
             description: query.0.description.clone(),
-            metadata,
+            metadata: metadata.clone(),
         })
         .await;
 
@@ -82,13 +82,18 @@ pub async fn create_product_flow(
         return Err(InternalError::from_response(e, response));
     }
 
+    // add product id to metadata
+    let product_id = res.ok().unwrap().into_inner().id;
+    metadata.insert("product_id".to_string(), product_id.clone());
+
     // create price
     let res = price_client
         .client
         .create_price(CreatePriceRequest {
             currency: "USD".to_string(),
             amount: query.0.price.checked_mul(100).unwrap(),
-            product: res.ok().unwrap().into_inner().id,
+            product: product_id,
+            metadata,
         })
         .await;
 

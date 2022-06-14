@@ -1,6 +1,6 @@
 use actix_web::{error::InternalError, web, HttpResponse};
-use payments_server::payments_v1::customer_handler_client::CustomerHandlerClient;
-use payments_server::payments_v1::*;
+use stripe_server::payments_v1::customer_handler_client::CustomerHandlerClient;
+use stripe_server::payments_v1::*;
 use tonic::transport::{Channel, Uri};
 
 use super::Payment;

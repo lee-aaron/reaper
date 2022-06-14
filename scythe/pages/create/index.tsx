@@ -11,6 +11,7 @@ import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
 import Payment from "../../src/components/Payment";
+import SubscriptionCard from "../../src/components/SubscriptionCard";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 const Create: NextPage = () => {
@@ -77,6 +78,7 @@ const Create: NextPage = () => {
                 title="List of Subscriptions"
                 subtitle="Click here to get started"
               />
+              <SubscriptionCard />
             </Card>
           </Grid>
         </Grid>
