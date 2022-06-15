@@ -3,3 +3,17 @@ syntax = "proto3";
 package payments_v1;
 
 option go_package = "github.com/lee-aaron/stripe-go/subscription";
+
+message CreateSubscriptionRequest {
+  string customer_id = 1;
+  string price_id = 2;
+}
+
+message CreateSubscriptionReply {
+  string subscription_id = 1;
+  string client_secret = 2;
+}
+
+service SubscriptionHandler {
+  rpc CreateSubscription(CreateSubscriptionRequest) returns (CreateSubscriptionReply);
+}

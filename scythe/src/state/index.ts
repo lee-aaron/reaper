@@ -15,6 +15,7 @@ import storage from "./sync_storage";
 import user from "./user/reducer";
 import authentication from "./authentication/reducer";
 import discord from "./discord/reducer";
+import payments from "./payments/reducer";
 
 const PERSISTED_KEYS: string[] = ["user", "authentication"];
 
@@ -22,7 +23,8 @@ const reducers = combineReducers({
   application,
   user,
   authentication,
-  discord
+  discord,
+  payments
 });
 
 const persistConfig = {

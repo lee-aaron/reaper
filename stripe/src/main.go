@@ -24,6 +24,14 @@ func NewGRPCServer() *grpc.Server {
 		)))
 	prod := ProductServer{}
 	price := PricesServer{}
+	cus := CustomerServer{}
+	sub := SubscriptionServer{}
+	portal := PortalServer{}
+	account := AccountServer{}
+	account.Register(grpcServer, &account)
+	portal.Register(grpcServer, &portal)
+	sub.Register(grpcServer, &sub)
+	cus.Register(grpcServer, &cus)
 	prod.Register(grpcServer, &prod)
 	price.Register(grpcServer, &price)
 	return grpcServer

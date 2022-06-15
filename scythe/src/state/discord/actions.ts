@@ -1,5 +1,6 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
 import { AppState } from "..";
+import { User } from "./reducer";
 
 export const GetGuilds = createAsyncThunk("discord/guilds/get", async (_, thunkAPI) => {
   try {
@@ -20,3 +21,5 @@ export const GetGuilds = createAsyncThunk("discord/guilds/get", async (_, thunkA
     return true;
   },
 });
+
+export const GetUser = createAction<User>("discord/user/get");

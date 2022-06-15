@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use actix_web::{error::InternalError, web, HttpResponse};
 use stripe_server::payments_v1::customer_handler_client::CustomerHandlerClient;
 use stripe_server::payments_v1::*;
@@ -9,6 +11,7 @@ use super::Payment;
 pub struct CustomerInfo {
     pub customer_name: String,
     pub customer_email: String,
+    pub metadata: HashMap<String, String>,
 }
 
 #[derive(Clone)]
@@ -50,6 +53,7 @@ pub async fn create_customer(
         .create_customer(CustomerCreateRequest {
             customer_name: customer.0.customer_name,
             customer_email: customer.0.customer_email,
+            metadata: customer.0.metadata,
         })
         .await;
 
@@ -77,6 +81,7 @@ pub async fn get_customer(
         Ok(HttpResponse::Ok().json(CustomerInfo {
             customer_name: reply.customer_name,
             customer_email: reply.customer_email,
+            metadata: reply.metadata,
         }))
     } else {
         let response = HttpResponse::InternalServerError().finish();

@@ -1,5 +1,5 @@
 use stripe_server::payments_v1::{
-    portal_handler_client::PortalHandlerClient, PortalCreateRequest,
+    portal_handler_client::PortalHandlerClient, CreatePortalRequest,
 };
 use tonic::transport::{Channel, Uri};
 
@@ -37,7 +37,7 @@ impl PortalClient {
         customer_id: String,
         return_url: String,
     ) -> Result<String, anyhow::Error> {
-        let request = PortalCreateRequest {
+        let request = CreatePortalRequest {
             customer_id,
             return_url,
         };

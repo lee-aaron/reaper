@@ -2,15 +2,15 @@ import { Box, Card, CardHeader, Container, Grid, Paper, Typography, useTheme } f
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
-import { useUser } from "../../src/state/authentication/hooks";
+import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 const Subscribe: NextPage = () => {
   const theme = useTheme();
-  const { isError } = useUser();
   const router = useRouter();
+  const isAuthenticated = useIsAuthenticated();
   const color = 'primary';
 
-  if (isError) {
+  if (!isAuthenticated) {
     router.push("/login");
   }
 

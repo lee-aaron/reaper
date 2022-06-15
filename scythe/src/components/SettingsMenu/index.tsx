@@ -10,6 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useRef, useState } from "react";
+import { useUser } from "../../state/discord/hooks";
 import MenuPopover from "../MenuPopover";
 
 export default function SettingsMenu() {
@@ -17,6 +18,7 @@ export default function SettingsMenu() {
   const anchorRef = useRef(null);
 
   const [open, setOpen] = useState<any>(null);
+  const user = useUser();
 
   const handleOpen = (event: React.MouseEvent<HTMLButtonElement>) => {
     setOpen(event.currentTarget);
@@ -53,10 +55,10 @@ export default function SettingsMenu() {
       >
         <Box sx={{ my: 1.5, px: 2.5 }}>
           <Typography variant="subtitle2" noWrap>
-            User?
+            {user.username}#{user.discriminator}
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary" }} noWrap>
-            Email
+            {user.email}
           </Typography>
         </Box>
 

@@ -3,6 +3,8 @@ import React from "react";
 import { useDarkModeManager } from "../../state/user/hooks";
 import UserUpdater from "../../state/user/updater";
 import AuthUpdater from "../../state/authentication/updater";
+import DiscordUpdater from "../../state/discord/updater";
+import PaymentsUpdater from "../../state/payments/updater";
 import Footer from "../Footer";
 import Header from "../Header";
 
@@ -11,6 +13,8 @@ function Updaters() {
     <React.Fragment>
       <UserUpdater />
       <AuthUpdater />
+      <DiscordUpdater />
+      <PaymentsUpdater />
     </React.Fragment>
   );
 }

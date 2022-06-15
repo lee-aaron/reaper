@@ -11,7 +11,7 @@ const MenuPopover: React.FC<PopoverProps> = ({ children, sx, ...other }) => {
       PaperProps={{
         sx: {
           p: 1,
-          width: 200,
+          width: 300,
           overflow: "inherit",
           ...sx,
         },

@@ -4,15 +4,15 @@ package payments_v1;
 
 option go_package = "github.com/lee-aaron/stripe-go/portal";
 
-message PortalCreateRequest {
+message CreatePortalRequest {
   string customer_id = 1;
   string return_url = 2;
 }
 
-message PortalCreateReply {
+message CreatePortalReply {
   string portal_url = 1;
 }
 
 service PortalHandler {
-  rpc CreatePortal(PortalCreateRequest) returns (PortalCreateReply);
+  rpc CreatePortal(CreatePortalRequest) returns (CreatePortalReply);
 }

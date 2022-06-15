@@ -22,7 +22,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type PortalHandlerClient interface {
-	CreatePortal(ctx context.Context, in *PortalCreateRequest, opts ...grpc.CallOption) (*PortalCreateReply, error)
+	CreatePortal(ctx context.Context, in *CreatePortalRequest, opts ...grpc.CallOption) (*CreatePortalReply, error)
 }
 
 type portalHandlerClient struct {
@@ -33,8 +33,8 @@ func NewPortalHandlerClient(cc grpc.ClientConnInterface) PortalHandlerClient {
 	return &portalHandlerClient{cc}
 }
 
-func (c *portalHandlerClient) CreatePortal(ctx context.Context, in *PortalCreateRequest, opts ...grpc.CallOption) (*PortalCreateReply, error) {
-	out := new(PortalCreateReply)
+func (c *portalHandlerClient) CreatePortal(ctx context.Context, in *CreatePortalRequest, opts ...grpc.CallOption) (*CreatePortalReply, error) {
+	out := new(CreatePortalReply)
 	err := c.cc.Invoke(ctx, "/payments_v1.PortalHandler/CreatePortal", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func (c *portalHandlerClient) CreatePortal(ctx context.Context, in *PortalCreate
 // All implementations must embed UnimplementedPortalHandlerServer
 // for forward compatibility
 type PortalHandlerServer interface {
-	CreatePortal(context.Context, *PortalCreateRequest) (*PortalCreateReply, error)
+	CreatePortal(context.Context, *CreatePortalRequest) (*CreatePortalReply, error)
 	mustEmbedUnimplementedPortalHandlerServer()
 }
 
@@ -54,7 +54,7 @@ type PortalHandlerServer interface {
 type UnimplementedPortalHandlerServer struct {
 }
 
-func (UnimplementedPortalHandlerServer) CreatePortal(context.Context, *PortalCreateRequest) (*PortalCreateReply, error) {
+func (UnimplementedPortalHandlerServer) CreatePortal(context.Context, *CreatePortalRequest) (*CreatePortalReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreatePortal not implemented")
 }
 func (UnimplementedPortalHandlerServer) mustEmbedUnimplementedPortalHandlerServer() {}
@@ -71,7 +71,7 @@ func RegisterPortalHandlerServer(s grpc.ServiceRegistrar, srv PortalHandlerServe
 }
 
 func _PortalHandler_CreatePortal_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PortalCreateRequest)
+	in := new(CreatePortalRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func _PortalHandler_CreatePortal_Handler(srv interface{}, ctx context.Context, d
 		FullMethod: "/payments_v1.PortalHandler/CreatePortal",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PortalHandlerServer).CreatePortal(ctx, req.(*PortalCreateRequest))
+		return srv.(PortalHandlerServer).CreatePortal(ctx, req.(*CreatePortalRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

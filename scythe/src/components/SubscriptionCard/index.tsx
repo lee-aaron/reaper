@@ -17,7 +17,7 @@ const SubscriptionCard: React.FC<{}> = () => {
       email: "lee.aaron.68@gmail.com"
     }
 
-    let url = new URL("http://localhost:3000/api/v1/search_product")
+    let url = new URL("/api/v1/search_product", window.location.origin);
     let params = {
       "query": JSON.stringify(query)
     }

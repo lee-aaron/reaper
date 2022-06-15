@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package payments_v1;
+
+option go_package = "github.com/lee-aaron/stripe-go/account";
+
+message CreateAccountRequest {
+  string email = 1;
+  map <string, string> metadata = 2;
+}
+
+message CreateAccountReply {
+  string account_id = 1;
+}
+
+message GetAccountRequest {
+  string account_id = 1;
+}
+
+message GetAccountReply {
+  string account_id = 1;
+  string email = 2;
+  bool charges_enabled = 3;
+  map<string, string> metadata = 4;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+}
+
+message DeleteAccountReply {
+  bool deleted = 1;
+}
+
+message CreateAccountLinkRequest {
+  string account_id = 1;
+  string refresh_url = 2;
+  string return_url = 3;
+}
+
+message CreateAccountLinkReply {
+  string url = 1;
+  int64 expires_at = 2;
+}
+
+service AccountHandler {
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountReply);
+  rpc GetAccount(GetAccountRequest) returns (GetAccountReply);
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountReply);
+  rpc CreateAccountLink(CreateAccountLinkRequest) returns (CreateAccountLinkReply);
+}

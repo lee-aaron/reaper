@@ -6,3 +6,8 @@ export function useAdminGuilds() {
   
   return useMemo(() => guilds.filter((guild) => guild.owner), [guilds]);
 }
+
+export function useUser() {
+  const user = useAppSelector((state) => state.discord.user);
+  return user;
+}

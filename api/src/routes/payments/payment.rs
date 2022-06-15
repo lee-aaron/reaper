@@ -6,7 +6,7 @@ use shared::configuration::get_configuration;
 
 use super::{
     customer_client::CustomerClient, portal_client::PortalClient, prices_client::PricesClient,
-    ProductClient,
+    ProductClient, AccountClient,
 };
 
 #[derive(Clone)]
@@ -15,6 +15,7 @@ pub struct Payment {
     pub portal_client: PortalClient,
     pub price_client: PricesClient,
     pub product_client: ProductClient,
+    pub account_client: AccountClient,
 }
 
 impl Payment {
@@ -33,11 +34,13 @@ impl Payment {
         let portal_client = PortalClient::new(&addr.clone().to_string());
         let price_client = PricesClient::new(&addr.clone().to_string());
         let product_client = ProductClient::new(&addr.clone().to_string());
+        let account_client = AccountClient::new(&addr.clone().to_string());
         Payment {
             customer_client,
             portal_client,
             price_client,
             product_client,
+            account_client,
         }
     }
 }

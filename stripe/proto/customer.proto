@@ -7,6 +7,7 @@ option go_package = "github.com/lee-aaron/stripe-go/customer";
 message CustomerCreateRequest {
   string customer_name = 1;
   string customer_email = 2;
+  map<string, string> metadata = 3;
 }
 
 message CustomerCreateReply {
@@ -20,6 +21,7 @@ message CustomerGetRequest {
 message CustomerGetReply {
   string customer_name = 1;
   string customer_email = 2;
+  map<string, string> metadata = 3;
 }
 
 message CustomerDeleteRequest {

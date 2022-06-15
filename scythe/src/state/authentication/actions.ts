@@ -1,13 +1,11 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { AppState } from "..";
-import { AuthStatus } from "./reducer";
 
 export const loginRequest = createAsyncThunk(
   "auth/loginRequest",
   async (_, thunkAPI) => {
     try {
       const res = await fetch("/api/v1/user", {
-        signal: thunkAPI.signal
+        signal: thunkAPI.signal,
       });
       if (res.status !== 200) {
         throw new Error(res.statusText);
@@ -24,7 +22,7 @@ export const logoutRequest = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await fetch("/api/v1/logout", {
-        signal: thunkAPI.signal
+        signal: thunkAPI.signal,
       });
       if (res.status !== 200) {
         throw new Error(res.statusText);

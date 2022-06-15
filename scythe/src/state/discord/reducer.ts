@@ -1,5 +1,5 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { GetGuilds } from "./actions";
+import { GetGuilds, GetUser } from "./actions";
 
 export interface Guild {
   id: string;
@@ -49,5 +49,8 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetGuilds.rejected, (state, action) => {
       state.status = "error";
       state.guilds = [];
-    });
+    })
+    .addCase(GetUser, (state, action) => {
+      state.user = action.payload;
+    })
 });

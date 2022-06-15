@@ -40,7 +40,6 @@ pub struct ProductInfo {
     pub query: String,
 }
 
-
 pub async fn search_product(
     product: web::Query<ProductInfo>,
     client: web::Data<Payment>,
