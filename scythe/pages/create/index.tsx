@@ -65,7 +65,7 @@ const Create: NextPage = () => {
             Create a Guild
           </Typography>
         </Paper>
-        {owner.status === "success" ? (
+        {owner.status === "verified" ? (
           <Grid
             container
             spacing={{ xs: 2, md: 3 }}

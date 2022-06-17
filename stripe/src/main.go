@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 
 	"github.com/lee-aaron/stripe-go/utils"
 	"github.com/stripe/stripe-go/v72"
@@ -13,6 +14,8 @@ import (
 	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
 	"google.golang.org/grpc"
 )
+
+var config = utils.LoadYaml()
 
 func NewGRPCServer() *grpc.Server {
 	grpcServer := grpc.NewServer(
@@ -37,16 +40,28 @@ func NewGRPCServer() *grpc.Server {
 	return grpcServer
 }
 
+func NewWebhook() {
+	http.HandleFunc("/webhook", HandleWebhook)
+
+	log.Printf("Webhook listening on %s:%d", config.Payments.Host, config.Payments.WebhookPort)
+
+	err := http.ListenAndServe(fmt.Sprintf("%s:%d", config.Payments.Host, config.Payments.WebhookPort), nil)
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
+}
+
 func main() {
-	config := utils.LoadYaml()
 	stripe.Key = config.Stripe.Secret_key
+
+	go NewWebhook()
 
 	listen, err := net.Listen("tcp", fmt.Sprintf("%s:%d", config.Payments.Host, config.Payments.Port))
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Listening on %s:%d", config.Payments.Host, config.Payments.Port)
+	log.Printf("GRPC Server listening on %s:%d", config.Payments.Host, config.Payments.Port)
 
 	grpcServer := NewGRPCServer()
 	if err := grpcServer.Serve(listen); err != nil {

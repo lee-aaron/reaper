@@ -99,6 +99,25 @@ impl AccountClient {
         .await?;
         Ok(())
     }
+
+    #[tracing::instrument(name = "update_account", skip(self, transaction))]
+    pub async fn update_account(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        stripe_account_id: String,
+        status: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE accounts SET status = $1 WHERE stripe_account_id = $2
+            "#,
+            status,
+            stripe_account_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
@@ -285,4 +304,23 @@ pub async fn delete_account(
     Ok(HttpResponse::Ok().json(json!({
         "message": "Account deleted",
     })))
+}
+
+pub async fn update_account(
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+    query: web::Json<String>
+) -> Result<HttpResponse, actix_web::Error> {
+
+    let mut transaction = pg
+        .begin()
+        .await
+        .context("Failed to acquire a Postgres connection from the pool")
+        .map_err(e500)?;
+
+    client.account_client.update_account(&mut transaction, query.0, "verified".to_string()).await.map_err(e500)?;
+
+    transaction.commit().await.context("Failed to commit the transaction").map_err(e500)?;
+
+    Ok(HttpResponse::Ok().finish())
 }

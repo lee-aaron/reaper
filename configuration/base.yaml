@@ -15,3 +15,4 @@ redis_uri: "redis://127.0.0.1:6379"
 payments:
   host: "127.0.0.1"
   port: 9000
+  webhook_port: 9001

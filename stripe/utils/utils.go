@@ -9,9 +9,15 @@ import (
 )
 
 type Settings struct {
-	Database DatabaseSettings
-	Stripe   StripeSettings
-	Payments PaymentsSettings
+	Application ApplicationSettings
+	Database    DatabaseSettings
+	Stripe      StripeSettings
+	Payments    PaymentsSettings
+}
+
+type ApplicationSettings struct {
+	Host string
+	Port uint
 }
 
 type DatabaseSettings struct {
@@ -28,8 +34,9 @@ type StripeSettings struct {
 }
 
 type PaymentsSettings struct {
-	Port uint
-	Host string
+	Port        uint
+	Host        string
+	WebhookPort uint
 }
 
 const (
@@ -67,8 +74,12 @@ func LoadYaml() Settings {
 		panic(err)
 	}
 
+	settings.Application.Host = config.String("application.host")
+	settings.Application.Port = config.Uint("application.port")
+
 	settings.Payments.Port = config.Uint("payments.port")
 	settings.Payments.Host = config.String("payments.host")
+	settings.Payments.WebhookPort = config.Uint("payments.webhook_port")
 
 	settings.Stripe.Secret_key = config.String("stripe.secret_key")
 

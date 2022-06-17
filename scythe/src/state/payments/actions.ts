@@ -15,7 +15,7 @@ export const deleteCustomer = createAction<{
 }>("payments/deleteCustomer");
 
 export const CreateAccount = createAsyncThunk(
-  "discord/guilds/get",
+  "payments/accounts/create",
   async (
     {
       discord_id,

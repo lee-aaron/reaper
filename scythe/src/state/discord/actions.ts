@@ -4,7 +4,7 @@ import { User } from "./reducer";
 
 export const GetGuilds = createAsyncThunk("discord/guilds/get", async (_, thunkAPI) => {
   try {
-    const res = await fetch("/api/v1/get_guilds");
+    const res = await fetch(new URL("/api/v1/get_guilds", window.location.origin));
     if (res.status !== 200) {
       throw new Error(res.statusText);
     }

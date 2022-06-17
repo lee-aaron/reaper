@@ -15,6 +15,7 @@ const AccountLink = () => {
   const theme = useTheme();
   const user = useUser();
   const [url, setURL] = React.useState("");
+  // show loading symbol and periodically check for verified status
 
   useEffect(() => {
     let shouldFetch = true;
