@@ -32,6 +32,8 @@ func (s *PricesServer) CreatePrice(ctx context.Context, req *pb.CreatePriceReque
 		params.AddMetadata(k, v)
 	}
 
+	params.SetStripeAccount(req.StripeAccount)
+
 	p, err := price.New(params)
 	if err != nil {
 		return &pb.CreatePriceReply{
@@ -45,12 +47,9 @@ func (s *PricesServer) CreatePrice(ctx context.Context, req *pb.CreatePriceReque
 }
 
 func (s *PricesServer) GetPrice(ctx context.Context, req *pb.GetPriceRequest) (*pb.GetPriceReply, error) {
-
 	p, err := price.Get(req.PriceId, nil)
 	if err != nil {
-		return &pb.GetPriceReply{
-			PriceId: "",
-		}, err
+		return nil, err
 	}
 
 	return &pb.GetPriceReply{

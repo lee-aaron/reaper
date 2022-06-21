@@ -11,27 +11,10 @@ export default function Updater(): null {
 
   useEffect(() => {
     if (!isAuthenticated || !user.id) return;
-    let shouldFetch = true;
-    
-    const fetchData = async () => {
-      let accountUrl = new URL("/api/v1/get_account", window.location.origin);
-      accountUrl.searchParams.append("discord_id", user.id);
-      let response = await fetch(accountUrl.toString());
-  
-      // dispatch
-      if (shouldFetch) {
-        const account = await response.json();
-        dispatch(GetAccount({
-          id: account[0],
-          status: account[1]
-        }));
-      }
-    };
-
-    fetchData().catch(console.error);
+    const promise = dispatch(GetAccount({ discord_id: user.id }));
 
     return () => {
-      shouldFetch = false;
+      promise.abort();
     }
   }, [dispatch, isAuthenticated, user]);
 

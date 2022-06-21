@@ -361,7 +361,9 @@ pub struct CreateProductRequest {
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag="2")]
     pub description: ::prost::alloc::string::String,
-    #[prost(map="string, string", tag="3")]
+    #[prost(string, tag="3")]
+    pub stripe_account: ::prost::alloc::string::String,
+    #[prost(map="string, string", tag="4")]
     pub metadata: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -373,6 +375,8 @@ pub struct CreateProductReply {
 pub struct GetProductRequest {
     #[prost(string, tag="1")]
     pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub stripe_account: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetProductReply {
@@ -385,6 +389,8 @@ pub struct GetProductReply {
 pub struct DeleteProductRequest {
     #[prost(string, tag="1")]
     pub id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub stripe_account: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DeleteProductReply {
@@ -399,6 +405,8 @@ pub struct UpdateProductRequest {
     pub name: ::prost::alloc::string::String,
     #[prost(string, tag="3")]
     pub description: ::prost::alloc::string::String,
+    #[prost(string, tag="4")]
+    pub stripe_account: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UpdateProductReply {
@@ -423,9 +431,11 @@ pub struct Product {
 pub struct SearchProductRequest {
     #[prost(string, tag="1")]
     pub query: ::prost::alloc::string::String,
-    #[prost(int64, optional, tag="2")]
+    #[prost(string, tag="2")]
+    pub stripe_account: ::prost::alloc::string::String,
+    #[prost(int64, optional, tag="3")]
     pub limit: ::core::option::Option<i64>,
-    #[prost(string, optional, tag="3")]
+    #[prost(string, optional, tag="4")]
     pub page: ::core::option::Option<::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -602,7 +612,9 @@ pub struct CreatePriceRequest {
     pub product: ::prost::alloc::string::String,
     #[prost(int64, tag="3")]
     pub amount: i64,
-    #[prost(map="string, string", tag="4")]
+    #[prost(string, tag="4")]
+    pub stripe_account: ::prost::alloc::string::String,
+    #[prost(map="string, string", tag="5")]
     pub metadata: ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

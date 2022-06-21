@@ -1,12 +1,16 @@
 use std::{collections::HashMap, net::ToSocketAddrs};
 
-use actix_web::{error::InternalError, web, HttpResponse};
-use stripe_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
+use actix_web::{web, HttpResponse};
+use anyhow::Context;
 use shared::configuration::get_configuration;
+use sqlx::PgPool;
+use stripe_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
+
+use crate::utils::e500;
 
 use super::{
     customer_client::CustomerClient, portal_client::PortalClient, prices_client::PricesClient,
-    ProductClient, AccountClient,
+    AccountClient, ProductClient,
 };
 
 #[derive(Clone)]
@@ -53,23 +57,46 @@ pub struct ProductFlow {
     pub description: String,
     pub price: i64,
     pub target_server: String,
+    pub discord_id: String,
+    pub discord_name: String,
+    pub discord_icon: String,
 }
 
+#[tracing::instrument(name = "product_flow", skip(pg, payment))]
 pub async fn create_product_flow(
     query: web::Json<ProductFlow>,
     payment: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<tonic::Status>> {
+    pg: web::Data<PgPool>,
+) -> Result<HttpResponse, actix_web::Error> {
     let mut product_client = payment.product_client.clone();
     let mut price_client = payment.price_client.clone();
 
     // assert each discord server only has < 3 products
     // store in postgres db discord server id -> num products
 
+    // fetch stripe account id from postgres db
+    let (stripe_account_id, _) = payment
+        .account_client
+        .get_account(&pg, query.0.discord_id.clone())
+        .await
+        .map_err(e500)?;
+
     // create product
     // create metadata for product
     let mut metadata = HashMap::new();
     metadata.insert("email".to_string(), query.0.email.clone());
-    metadata.insert("discord_server_id".to_string(), query.0.target_server.clone());
+    metadata.insert(
+        "discord_server_id".to_string(),
+        query.0.target_server.clone(),
+    );
+    metadata.insert(
+        "discord_server_name".to_string(),
+        query.0.discord_name.clone(),
+    );
+    metadata.insert(
+        "discord_server_icon".to_string(),
+        query.0.discord_icon.clone(),
+    );
 
     let res = product_client
         .client
@@ -77,33 +104,58 @@ pub async fn create_product_flow(
             name: query.0.product_name.clone(),
             description: query.0.description.clone(),
             metadata: metadata.clone(),
+            stripe_account: stripe_account_id.clone(),
         })
-        .await;
-
-    if let Err(e) = res {
-        let response = HttpResponse::InternalServerError().finish();
-        return Err(InternalError::from_response(e, response));
-    }
+        .await
+        .map_err(e500)?;
 
     // add product id to metadata
-    let product_id = res.ok().unwrap().into_inner().id;
+    let product_id = res.into_inner().id;
     metadata.insert("product_id".to_string(), product_id.clone());
 
+    // assert price is minimum 10 dollars
+    if query.0.price < 10 {
+        return Err(e500("Price must be at least $10"));
+    }
+
     // create price
-    let res = price_client
+    price_client
         .client
         .create_price(CreatePriceRequest {
             currency: "USD".to_string(),
             amount: query.0.price.checked_mul(100).unwrap(),
-            product: product_id,
+            product: product_id.clone(),
             metadata,
+            stripe_account: stripe_account_id.clone(),
         })
-        .await;
+        .await
+        .map_err(e500)?;
 
-    if let Err(e) = res {
-        let response = HttpResponse::InternalServerError().finish();
-        return Err(InternalError::from_response(e, response));
-    }
+    // insert discord info into the database
+    let mut transaction = pg
+        .begin()
+        .await
+        .context("Failed to acquire a Postgres connection from the pool")
+        .map_err(e500)?;
+
+    product_client
+        .insert_into_db(
+            &mut transaction,
+            product_id.clone(),
+            query.0.target_server.clone(),
+            query.0.product_name.clone(),
+            query.0.description.clone(),
+            query.0.discord_name.clone(),
+            query.0.discord_icon.clone(),
+        )
+        .await
+        .map_err(e500)?;
+
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit transaction")
+        .map_err(e500)?;
 
     Ok(HttpResponse::Ok().finish())
 }

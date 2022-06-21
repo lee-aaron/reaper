@@ -12,15 +12,12 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
-  useTheme,
+  useTheme
 } from "@mui/material";
-import { loadStripe } from "@stripe/stripe-js";
 import React, { useEffect } from "react";
 import { GetGuilds } from "../../state/discord/actions";
-import { useAdminGuilds } from "../../state/discord/hooks";
+import { useAdminGuilds, useUser } from "../../state/discord/hooks";
 import { useAppDispatch } from "../../state/hooks";
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_KEY!);
 
 const Payment: React.FC<{}> = () => {
   const theme = useTheme();
@@ -29,6 +26,7 @@ const Payment: React.FC<{}> = () => {
   const [discord_id, setDiscord] = React.useState<string>("");
   const dispatch = useAppDispatch();
   const guilds = useAdminGuilds();
+  const user = useUser();
 
   useEffect(() => {
     dispatch(GetGuilds());
@@ -43,6 +41,8 @@ const Payment: React.FC<{}> = () => {
       setAmountError(false);
     }
 
+    const guild = guilds.filter(g => g.id === discord_id);
+
     fetch("/api/v1/create_product", {
       method: "POST",
       headers: {
@@ -50,11 +50,14 @@ const Payment: React.FC<{}> = () => {
       },
       body: JSON.stringify({
         name: form.productName,
-        email: form.email,
+        email: user.email,
         product_name: form.productName,
         description: form.productDescription,
         price: Number(form.productAmount),
         target_server: discord_id,
+        discord_id: user.id,
+        discord_name: guild[0].name,
+        discord_icon: guild[0].icon,
       }),
     })
       .then((res) => {
@@ -74,9 +77,6 @@ const Payment: React.FC<{}> = () => {
 
   return (
     <React.Fragment>
-      {/* <Elements stripe={stripePromise}>
-        <CheckoutForm />
-      </Elements> */}
       <form onSubmit={handleSubmit}>
         <Container maxWidth="md">
           <Grid
@@ -103,8 +103,9 @@ const Payment: React.FC<{}> = () => {
                 required
                 id="email"
                 label="Email"
+                value={user.email}
                 fullWidth
-                onChange={handleChange}
+                disabled
                 autoComplete="email"
                 variant="standard"
               />

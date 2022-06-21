@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { CreateAccount } from "../../src/components/Account/";
 import AccountLink from "../../src/components/Account/AccountLink";
 import Payment from "../../src/components/Payment";
@@ -90,7 +90,7 @@ const Create: NextPage = () => {
                 <Payment />
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={8}>
+            <Grid item xs={12} sm={6} md={4}>
               <Card
                 sx={{
                   padding: theme.spacing(1, 1),

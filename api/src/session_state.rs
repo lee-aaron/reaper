@@ -9,18 +9,18 @@ use crate::routes::DiscordResponse;
 pub struct TypedSession(Session);
 
 impl TypedSession {
-    const DISCORD_ID_KEY: &'static str = "discord_id";
+    const DISCORD_TOKEN_KEY: &'static str = "discord_token";
 
     pub fn renew(&self) {
         self.0.renew();
     }
 
     pub fn insert_discord_oauth(&self, cred: DiscordResponse) -> Result<(), serde_json::Error> {
-        self.0.insert(Self::DISCORD_ID_KEY, cred)
+        self.0.insert(Self::DISCORD_TOKEN_KEY, cred)
     }
 
     pub fn get_discord_oauth(&self) -> Result<Option<DiscordResponse>, serde_json::Error> {
-        self.0.get(Self::DISCORD_ID_KEY)
+        self.0.get(Self::DISCORD_TOKEN_KEY)
     }
 
     pub fn log_out(self) {

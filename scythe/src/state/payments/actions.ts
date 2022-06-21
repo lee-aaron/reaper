@@ -61,7 +61,7 @@ export const CreateAccount = createAsyncThunk(
   {
     condition: (_, thunkAPI) => {
       let state = thunkAPI.getState() as AppState;
-      if (state.discord.status === "loading") {
+      if (state.payments.owner.status === "loading") {
         return false;
       }
       return true;
@@ -69,7 +69,31 @@ export const CreateAccount = createAsyncThunk(
   }
 );
 
-export const GetAccount = createAction<{
-  id: string;
-  status: string;
-}>("payments/getAccount");
+export const GetAccount = createAsyncThunk("payments/accounts/get", async ({
+  discord_id
+}: {
+  discord_id: string;
+}, thunkAPI) => {
+  try {
+    const accountUrl = new URL(
+      "/api/v1/get_account",
+      window.location.origin
+    );
+    accountUrl.searchParams.append("discord_id", discord_id);
+    const res = await fetch(accountUrl.toString());
+    if (res.status !== 200) {
+      throw new Error(res.statusText);
+    }
+    return await res.json();
+  } catch (err) {
+    return thunkAPI.rejectWithValue("");
+  }
+}, {
+  condition: (_, thunkAPI) => {
+    let state = thunkAPI.getState() as AppState;
+    if (state.payments.owner.status === "loading") {
+      return false;
+    }
+    return true;
+  }
+});

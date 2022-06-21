@@ -1,10 +1,5 @@
-use std::collections::HashMap;
-
-use actix_web::{error::InternalError, web, HttpResponse};
-use stripe_server::payments_v1::{price_handler_client::PriceHandlerClient, *};
+use stripe_server::payments_v1::{price_handler_client::PriceHandlerClient,};
 use tonic::transport::{Channel, Uri};
-
-use super::Payment;
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct PriceInfo {
@@ -12,6 +7,7 @@ pub struct PriceInfo {
     pub product_id: String,
     pub price: i64,
     pub currency: String,
+    pub stripe_account: String,
 }
 
 #[derive(Clone)]
@@ -40,54 +36,5 @@ impl PricesClient {
         let channel = Channel::builder(uri).connect_lazy();
         let client = PriceHandlerClient::new(channel.clone());
         PricesClient { client }
-    }
-}
-
-pub async fn create_price(
-    query: web::Form<PriceInfo>,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<tonic::Status>> {
-    let mut prc_client = client.price_client.clone();
-    let result = prc_client
-        .client
-        .create_price(CreatePriceRequest {
-            product: query.0.product_id,
-            amount: query.0.price,
-            currency: "USD".to_string(),
-            metadata: HashMap::new()
-        })
-        .await;
-
-    if let Ok(reply) = result {
-        let reply = reply.into_inner();
-        Ok(HttpResponse::Ok().json(reply.price_id))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
-    }
-}
-
-pub async fn get_price(
-    query: web::Query<PriceInfo>,
-    client: web::Data<Payment>,
-) -> Result<HttpResponse, InternalError<tonic::Status>> {
-    let mut prc_client = client.price_client.clone();
-    let result = prc_client
-        .client
-        .get_price(GetPriceRequest { price_id: query.0.price_id })
-        .await;
-
-    if let Ok(reply) = result {
-        let reply = reply.into_inner();
-        let price_info = PriceInfo {
-            price_id: reply.price_id,
-            product_id: reply.product,
-            price: reply.amount,
-            currency: reply.currency,
-        };
-        Ok(HttpResponse::Ok().json(price_info))
-    } else {
-        let response = HttpResponse::InternalServerError().finish();
-        Err(InternalError::from_response(result.unwrap_err(), response))
     }
 }

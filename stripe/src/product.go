@@ -20,7 +20,6 @@ func (s *ProductServer) Register(server *grpc.Server, srv *ProductServer) {
 }
 
 func (s *ProductServer) CreateProduct(ctx context.Context, req *pb.CreateProductRequest) (*pb.CreateProductReply, error) {
-
 	params := &stripe.ProductParams{
 		Name:        stripe.String(req.Name),
 		Description: stripe.String(req.Description),
@@ -30,11 +29,11 @@ func (s *ProductServer) CreateProduct(ctx context.Context, req *pb.CreateProduct
 		params.AddMetadata(k, v)
 	}
 
+	params.SetStripeAccount(req.StripeAccount)
+
 	p, err := product.New(params)
 	if err != nil {
-		return &pb.CreateProductReply{
-			Id: "",
-		}, err
+		return nil, err
 	}
 
 	return &pb.CreateProductReply{
@@ -43,11 +42,12 @@ func (s *ProductServer) CreateProduct(ctx context.Context, req *pb.CreateProduct
 }
 
 func (s *ProductServer) UpdateProduct(ctx context.Context, req *pb.UpdateProductRequest) (*pb.UpdateProductReply, error) {
-
 	params := &stripe.ProductParams{
 		Name:        stripe.String(req.Name),
 		Description: stripe.String(req.Description),
 	}
+
+	params.SetStripeAccount(req.StripeAccount)
 
 	_, err := product.Update(req.Id, params)
 	if err != nil {
@@ -62,13 +62,12 @@ func (s *ProductServer) UpdateProduct(ctx context.Context, req *pb.UpdateProduct
 }
 
 func (s *ProductServer) GetProduct(ctx context.Context, req *pb.GetProductRequest) (*pb.GetProductReply, error) {
+	params := &stripe.ProductParams{}
+	params.SetStripeAccount(req.StripeAccount)
 
-	p, err := product.Get(req.Id, nil)
+	p, err := product.Get(req.Id, params)
 	if err != nil {
-		return &pb.GetProductReply{
-			Name:        "",
-			Description: "",
-		}, err
+		return nil, err
 	}
 
 	return &pb.GetProductReply{
@@ -78,12 +77,12 @@ func (s *ProductServer) GetProduct(ctx context.Context, req *pb.GetProductReques
 }
 
 func (s *ProductServer) DeleteProduct(ctx context.Context, req *pb.DeleteProductRequest) (*pb.DeleteProductReply, error) {
+	params := &stripe.ProductParams{}
+	params.SetStripeAccount(req.StripeAccount)
 
-	p, err := product.Del(req.Id, nil)
+	p, err := product.Del(req.Id, params)
 	if err != nil {
-		return &pb.DeleteProductReply{
-			Deleted: p.Deleted,
-		}, err
+		return nil, err
 	}
 
 	return &pb.DeleteProductReply{
@@ -92,12 +91,12 @@ func (s *ProductServer) DeleteProduct(ctx context.Context, req *pb.DeleteProduct
 }
 
 func (s *ProductServer) SearchProduct(ctx context.Context, req *pb.SearchProductRequest) (*pb.SearchProductReply, error) {
-
 	params := &stripe.ProductSearchParams{}
 	params.Limit = req.Limit
 	params.Page = req.Page
 	params.Query = req.Query
 	params.AddExpand("data.default_price")
+	params.SetStripeAccount(req.StripeAccount)
 	iter := product.Search(params)
 
 	var products []*pb.Product
@@ -106,17 +105,18 @@ func (s *ProductServer) SearchProduct(ctx context.Context, req *pb.SearchProduct
 
 		priceParams := &stripe.PriceSearchParams{}
 		priceParams.Query = fmt.Sprintf("metadata['product_id']: '%s'", iter.Product().ID)
+		priceParams.SetStripeAccount(req.StripeAccount)
 
 		curr := price.Search(priceParams)
-		curr.Next()
-
-		products = append(products, &pb.Product{
-			Id:          iter.Product().ID,
-			Name:        iter.Product().Name,
-			Description: iter.Product().Description,
-			Metadata:    iter.Product().Metadata,
-			Amount:      curr.Price().UnitAmount,
-		})
+		if curr.Next() {
+			products = append(products, &pb.Product{
+				Id:          iter.Product().ID,
+				Name:        iter.Product().Name,
+				Description: iter.Product().Description,
+				Metadata:    iter.Product().Metadata,
+				Amount:      curr.Price().UnitAmount,
+			})
+		}
 	}
 
 	return &pb.SearchProductReply{

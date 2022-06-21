@@ -58,8 +58,17 @@ export default createReducer(initialState, (builder) => {
     .addCase(CreateAccount.rejected, (state) => {
       state.owner.loading = "error";
     })
-    .addCase(GetAccount, (state, { payload }) => {
-      state.owner.id = payload.id;
-      state.owner.status = payload.status;
-    });
+    .addCase(GetAccount.pending, (state) => {
+      state.owner.loading = "loading";
+    })
+    .addCase(GetAccount.fulfilled, (state, action) => {
+      if (state.owner.loading === "loading") {
+        state.owner.loading = "idle";
+        state.owner.id = action.payload[0];
+        state.owner.status = action.payload[1];
+      }
+    })
+    .addCase(GetAccount.rejected, (state) => {
+      state.owner.loading = "error";
+    })
 });
