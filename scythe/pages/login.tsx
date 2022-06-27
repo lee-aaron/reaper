@@ -9,7 +9,7 @@ import {
 import type { NextPage } from "next";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import discord from "../public/discord_logo_small.svg";
 import { useIsAuthenticated } from "../src/state/authentication/hooks";
 
@@ -22,6 +22,10 @@ const Login: NextPage = () => {
   if (isAuthenticated) {
     router.push("/dashboard");
   }
+
+  useEffect(() => {
+    router.prefetch("/dashboard");
+  }, []);
 
   return (
     <React.Fragment>

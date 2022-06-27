@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 
 use actix_web::{web, HttpResponse};
-use sqlx::{PgPool, Transaction, Postgres};
+use anyhow::Context;
+use sqlx::{PgPool, Postgres, Transaction};
 use stripe_server::payments_v1::{product_handler_client::ProductHandlerClient, *};
 use tonic::transport::{Channel, Uri};
 
@@ -37,31 +38,48 @@ impl ProductClient {
         ProductClient { client }
     }
 
-    pub async fn insert_into_db(
+    pub async fn insert_into_guilds(
         &self,
         transaction: &mut Transaction<'_, Postgres>,
-        product_id: String,
-        discord_id: String,
-        subscription_name: String,
-        subscription_description: String,
-        discord_name: String,
-        discord_icon: String,
+        owner_id: String,
+        guild_id: String,
     ) -> Result<(), sqlx::Error> {
+        let array = vec![guild_id];
         sqlx::query!(
             r#"
-            INSERT INTO subscriptions (prod_id, discord_id, subscription_name, subscription_description, discord_name, discord_icon)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO guilds (discord_id, guild_id)
+            VALUES ($1, $2)
+            ON CONFLICT (discord_id) DO UPDATE set guild_id = COALESCE(EXCLUDED.guild_id, guilds.guild_id)
             "#,
-            product_id,
-            discord_id,
-            subscription_name,
-            subscription_description,
-            discord_name,
-            discord_icon
+            owner_id,
+            &array
         )
         .execute(transaction)
         .await?;
         Ok(())
+    }
+
+    pub async fn get_owner_id_from_guilds(
+        &self,
+        pool: &PgPool,
+        guild_id: String,
+    ) -> Result<String, anyhow::Error> {
+        let array = vec![guild_id];
+        let row = sqlx::query!(
+            r#"
+            SELECT discord_id FROM guilds WHERE guild_id @> $1
+            "#,
+            &array
+        )
+        .fetch_optional(pool)
+        .await
+        .context("Failed to perform a query to get owner id")?;
+
+        if let Some(row) = row {
+            Ok(row.discord_id)
+        } else {
+            Err(anyhow::anyhow!("Failed to get owner id"))
+        }
     }
 }
 

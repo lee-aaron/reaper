@@ -5,5 +5,6 @@ CREATE TABLE subscriptions (
   discord_name TEXT NOT NULL,
   subscription_name TEXT NOT NULL,
   subscription_description TEXT NOT NULL,
+  subscription_price TEXT NOT NULL,
   discord_icon TEXT NOT NULL
 )

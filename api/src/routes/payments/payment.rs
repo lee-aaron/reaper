@@ -4,13 +4,12 @@ use actix_web::{web, HttpResponse};
 use anyhow::Context;
 use shared::configuration::get_configuration;
 use sqlx::PgPool;
-use stripe_server::payments_v1::{CreatePriceRequest, CreateProductRequest};
+use stripe_server::payments_v1::CreateProductRequest;
 
 use crate::utils::e500;
 
 use super::{
-    customer_client::CustomerClient, portal_client::PortalClient, prices_client::PricesClient,
-    AccountClient, ProductClient,
+    AccountClient, CustomerClient, PortalClient, PricesClient, ProductClient, SubscriptionClient,
 };
 
 #[derive(Clone)]
@@ -20,6 +19,7 @@ pub struct Payment {
     pub price_client: PricesClient,
     pub product_client: ProductClient,
     pub account_client: AccountClient,
+    pub subscription_client: SubscriptionClient,
 }
 
 impl Payment {
@@ -39,12 +39,14 @@ impl Payment {
         let price_client = PricesClient::new(&addr.clone().to_string());
         let product_client = ProductClient::new(&addr.clone().to_string());
         let account_client = AccountClient::new(&addr.clone().to_string());
+        let subscription_client = SubscriptionClient::new(&addr.clone().to_string());
         Payment {
             customer_client,
             portal_client,
             price_client,
             product_client,
             account_client,
+            subscription_client,
         }
     }
 }
@@ -69,10 +71,15 @@ pub async fn create_product_flow(
     pg: web::Data<PgPool>,
 ) -> Result<HttpResponse, actix_web::Error> {
     let mut product_client = payment.product_client.clone();
-    let mut price_client = payment.price_client.clone();
+    let subscription_client = payment.subscription_client.clone();
 
     // assert each discord server only has < 3 products
     // store in postgres db discord server id -> num products
+
+    // assert price is minimum 10 dollars
+    if query.0.price < 10 {
+        return Err(e500("Price must be at least $10"));
+    }
 
     // fetch stripe account id from postgres db
     let (stripe_account_id, _) = payment
@@ -105,6 +112,7 @@ pub async fn create_product_flow(
             description: query.0.description.clone(),
             metadata: metadata.clone(),
             stripe_account: stripe_account_id.clone(),
+            amount: query.0.price.checked_mul(100).unwrap(),
         })
         .await
         .map_err(e500)?;
@@ -113,24 +121,6 @@ pub async fn create_product_flow(
     let product_id = res.into_inner().id;
     metadata.insert("product_id".to_string(), product_id.clone());
 
-    // assert price is minimum 10 dollars
-    if query.0.price < 10 {
-        return Err(e500("Price must be at least $10"));
-    }
-
-    // create price
-    price_client
-        .client
-        .create_price(CreatePriceRequest {
-            currency: "USD".to_string(),
-            amount: query.0.price.checked_mul(100).unwrap(),
-            product: product_id.clone(),
-            metadata,
-            stripe_account: stripe_account_id.clone(),
-        })
-        .await
-        .map_err(e500)?;
-
     // insert discord info into the database
     let mut transaction = pg
         .begin()
@@ -138,8 +128,8 @@ pub async fn create_product_flow(
         .context("Failed to acquire a Postgres connection from the pool")
         .map_err(e500)?;
 
-    product_client
-        .insert_into_db(
+    subscription_client
+        .insert_into_subscriptions(
             &mut transaction,
             product_id.clone(),
             query.0.target_server.clone(),
@@ -147,6 +137,17 @@ pub async fn create_product_flow(
             query.0.description.clone(),
             query.0.discord_name.clone(),
             query.0.discord_icon.clone(),
+            query.0.price.to_string(),
+        )
+        .await
+        .map_err(e500)?;
+
+    // insert owner id and discord id into db
+    product_client
+        .insert_into_guilds(
+            &mut transaction,
+            query.0.discord_id.clone(),
+            query.0.target_server.clone(),
         )
         .await
         .map_err(e500)?;

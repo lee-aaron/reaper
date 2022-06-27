@@ -11,20 +11,23 @@ import {
   IconButton,
   Paper,
   TextField,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 interface Subscription {
+  prod_id: string;
   discord_id: string;
   discord_icon: string;
   discord_name: string;
   subscription_name: string;
   subscription_description: string;
+  subscription_price: number;
 }
 
 const Subscribe: NextPage = () => {
@@ -40,6 +43,24 @@ const Subscribe: NextPage = () => {
   if (!isAuthenticated) {
     router.push("/login");
   }
+
+  useEffect(() => {
+    // check query params
+    let query = router.query.discord_name as string;
+
+    if (query) {
+      // fetch and load discord server info
+      let searchUrl = new URL("/api/v1/search_guilds", window.location.origin);
+      searchUrl.searchParams.append("discord_name", query);
+
+      fetch(searchUrl.toString())
+        .then((res) => res.json())
+        .then((data) => {
+          setSubscriptions(data);
+        })
+        .catch((err) => console.error(err));
+    }
+  }, [router.isReady]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.currentTarget;
@@ -59,6 +80,15 @@ const Subscribe: NextPage = () => {
     // dispatch get all subscriptions on click
     let searchUrl = new URL("/api/v1/search_guilds", window.location.origin);
     searchUrl.searchParams.append("discord_name", form.discord_name);
+    // set window's searchParams
+    router.push(
+      { pathname: "/subscribe", query: { discord_name: form.discord_name } },
+      undefined,
+      {
+        shallow: true,
+      }
+    );
+
     fetch(searchUrl.toString())
       .then((res) => res.json())
       .then((data) => {
@@ -126,38 +156,51 @@ const Subscribe: NextPage = () => {
           }}
         >
           {subscriptions.map((sub: Subscription) => (
-            <Grid item xs={4} sm={4} md={3}>
-              <Card sx={{ maxWidth: 340, padding: "1rem", my: "1rem" }}>
-                <CardHeader
-                  avatar={
-                    <Avatar
-                      sx={{
-                        height: "64px",
-                        width: "64px",
-                      }}
-                      src={`https://cdn.discordapp.com/icons/${sub.discord_id}/${sub.discord_icon}.png?size=64`}
-                    />
-                  }
-                  title={sub.discord_name}
-                  subheader={sub.subscription_name}
-                />
-                <CardContent>
-                  <Typography
-                    variant="body1"
-                    color="textSecondary"
-                    component="p"
-                  >
-                    {sub.subscription_description}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    component="p"
-                  >
-                    ${0}
-                  </Typography>
-                </CardContent>
-              </Card>
+            <Grid key={sub.prod_id} item xs={4} sm={4} md={3}>
+              <Tooltip
+                title="Click to be redirected to subscription page"
+                arrow
+              >
+                <Card
+                  sx={{ maxWidth: 340, padding: "1rem", my: "1rem" }}
+                  onClick={() => {
+                    router.push({
+                      pathname: `/subscribe/${sub.discord_id}`,
+                      query: { prod_id: sub.prod_id },
+                    });
+                  }}
+                >
+                  <CardHeader
+                    avatar={
+                      <Avatar
+                        sx={{
+                          height: "64px",
+                          width: "64px",
+                        }}
+                        src={`https://cdn.discordapp.com/icons/${sub.discord_id}/${sub.discord_icon}.png?size=64`}
+                      />
+                    }
+                    title={sub.discord_name}
+                    subheader={sub.subscription_name}
+                  />
+                  <CardContent>
+                    <Typography
+                      variant="body1"
+                      color="textSecondary"
+                      component="p"
+                    >
+                      {sub.subscription_description}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      component="p"
+                    >
+                      ${sub.subscription_price}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Tooltip>
             </Grid>
           ))}
         </Grid>

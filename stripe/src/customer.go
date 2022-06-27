@@ -28,6 +28,7 @@ func (s *CustomerServer) CreateCustomer(ctx context.Context, req *pb.CustomerCre
 		params.AddMetadata(k, v)
 	}
 
+	params.SetStripeAccount(req.StripeAccount)
 	c, err := customer.New(params)
 	if err != nil {
 		return nil, err
@@ -39,8 +40,9 @@ func (s *CustomerServer) CreateCustomer(ctx context.Context, req *pb.CustomerCre
 }
 
 func (s *CustomerServer) GetCustomer(ctx context.Context, req *pb.CustomerGetRequest) (*pb.CustomerGetReply, error) {
-
-	c, err := customer.Get(req.CustomerId, nil)
+	params := &stripe.CustomerParams{}
+	params.SetStripeAccount(req.StripeAccount)
+	c, err := customer.Get(req.CustomerId, params)
 
 	return &pb.CustomerGetReply{
 		CustomerName:  c.Name,
@@ -50,8 +52,9 @@ func (s *CustomerServer) GetCustomer(ctx context.Context, req *pb.CustomerGetReq
 }
 
 func (s *CustomerServer) DeleteCustomer(ctx context.Context, req *pb.CustomerDeleteRequest) (*pb.CustomerDeleteReply, error) {
-
-	c, err := customer.Del(req.CustomerId, nil)
+	params := &stripe.CustomerParams{}
+	params.SetStripeAccount(req.StripeAccount)
+	c, err := customer.Del(req.CustomerId, params)
 
 	return &pb.CustomerDeleteReply{
 		Deleted: c.Deleted,

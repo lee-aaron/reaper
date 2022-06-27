@@ -1,14 +1,73 @@
 import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
-import { AppState } from "..";
 
-export const createCustomer = createAction<{
-  name: string;
-  email: string;
-}>("payments/createCustomer");
+export const CreateCustomer = createAsyncThunk(
+  "payments/customer/create",
+  async (
+    {
+      name,
+      email,
+      discord_id,
+      server_id,
+    }: { name: string; email: string; discord_id: string; server_id: string },
+    thunkAPI
+  ) => {
+    try {
+      const createCustomerUrl = new URL(
+        "/api/v1/create_customer",
+        window.location.origin
+      );
 
-export const getCustomer = createAction<{
-  id: string;
-}>("payments/getCustomer");
+      let query = {
+        customer_name: name,
+        customer_email: email,
+        metadata: {
+          discord_id: discord_id,
+        },
+        server_id: server_id,
+      };
+
+      const res = await fetch(createCustomerUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(query),
+      });
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      thunkAPI.rejectWithValue(err);
+    }
+  }
+);
+
+export const GetCustomer = createAsyncThunk(
+  "payments/customer/get",
+  async (
+    { discord_id, server_id }: { discord_id: string; server_id: string },
+    thunkAPI
+  ) => {
+    const getCustomerUrl = new URL(
+      "/api/v1/get_customer",
+      window.location.origin
+    );
+
+    let query = {
+      discord_id: discord_id,
+      server_id: server_id,
+    };
+
+    getCustomerUrl.search = new URLSearchParams(query).toString();
+
+    const res = await fetch(getCustomerUrl.toString());
+    if (res.status !== 200) {
+      return thunkAPI.rejectWithValue(res.statusText);
+    }
+    return await res.json();
+  }
+);
 
 export const deleteCustomer = createAction<{
   id: string;
@@ -32,22 +91,106 @@ export const CreateAccount = createAsyncThunk(
     },
     thunkAPI
   ) => {
+    const accountUrl = new URL(
+      "/api/v1/create_account",
+      window.location.origin
+    );
+    const res = await fetch(accountUrl.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        discord_id: discord_id,
+        email: email,
+        name: name,
+        refresh_url: refresh_url,
+        return_url: return_url,
+      }),
+    });
+    if (res.status !== 200) {
+      return thunkAPI.rejectWithValue(res.statusText);
+    }
+    return await res.json();
+  }
+);
+
+export const GetAccount = createAsyncThunk(
+  "payments/accounts/get",
+  async (
+    {
+      discord_id,
+    }: {
+      discord_id: string;
+    },
+    thunkAPI
+  ) => {
     try {
-      const accountUrl = new URL(
-        "/api/v1/create_account",
+      const accountUrl = new URL("/api/v1/get_account", window.location.origin);
+      accountUrl.searchParams.append("discord_id", discord_id);
+      const res = await fetch(accountUrl.toString());
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+);
+
+export const SearchSubscription = createAsyncThunk(
+  "payments/subscriptions/search",
+  async (
+    {
+      prod_id
+    } : {
+      prod_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const subscriptionUrl = new URL(
+        "/api/v1/search_subscription",
         window.location.origin
       );
-      const res = await fetch(accountUrl.toString(), {
+      subscriptionUrl.searchParams.append("prod_id", prod_id);
+      const res = await fetch(subscriptionUrl.toString());
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+)
+
+export const CreateSubscription = createAsyncThunk(
+  "payments/subscriptions/create",
+  async (
+    {
+      prod_id,
+      customer_id,
+    } : {
+      prod_id: string;
+      customer_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const subscriptionUrl = new URL(
+        "/api/v1/create_subscription",
+        window.location.origin
+      );
+      const res = await fetch(subscriptionUrl.toString(), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          discord_id: discord_id,
-          email: email,
-          name: name,
-          refresh_url: refresh_url,
-          return_url: return_url,
+          prod_id: prod_id,
+          customer_id: customer_id,
         }),
       });
       if (res.status !== 200) {
@@ -57,43 +200,5 @@ export const CreateAccount = createAsyncThunk(
     } catch (err) {
       return thunkAPI.rejectWithValue("");
     }
-  },
-  {
-    condition: (_, thunkAPI) => {
-      let state = thunkAPI.getState() as AppState;
-      if (state.payments.owner.status === "loading") {
-        return false;
-      }
-      return true;
-    },
   }
-);
-
-export const GetAccount = createAsyncThunk("payments/accounts/get", async ({
-  discord_id
-}: {
-  discord_id: string;
-}, thunkAPI) => {
-  try {
-    const accountUrl = new URL(
-      "/api/v1/get_account",
-      window.location.origin
-    );
-    accountUrl.searchParams.append("discord_id", discord_id);
-    const res = await fetch(accountUrl.toString());
-    if (res.status !== 200) {
-      throw new Error(res.statusText);
-    }
-    return await res.json();
-  } catch (err) {
-    return thunkAPI.rejectWithValue("");
-  }
-}, {
-  condition: (_, thunkAPI) => {
-    let state = thunkAPI.getState() as AppState;
-    if (state.payments.owner.status === "loading") {
-      return false;
-    }
-    return true;
-  }
-});
+)

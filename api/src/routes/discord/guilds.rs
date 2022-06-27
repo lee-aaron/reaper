@@ -31,10 +31,12 @@ pub struct GuildRequest {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct GuildResponse {
+    pub prod_id: String,
     pub discord_id: String,
     pub discord_name: String,
     pub subscription_name: String,
     pub subscription_description: String,
+    pub subscription_price: String,
     pub discord_icon: String,
 }
 
@@ -58,7 +60,7 @@ pub async fn search_guilds(
     let rows = sqlx::query_as!(
         GuildResponse,
         r#"
-        SELECT discord_id, discord_name, subscription_name, subscription_description, discord_icon
+        SELECT prod_id, discord_id, discord_name, subscription_name, subscription_description, discord_icon, subscription_price
         FROM subscriptions
         WHERE discord_name ILIKE $1 || '%'
     "#,

@@ -8,6 +8,7 @@ message CustomerCreateRequest {
   string customer_name = 1;
   string customer_email = 2;
   map<string, string> metadata = 3;
+  string stripe_account = 4;
 }
 
 message CustomerCreateReply {
@@ -16,6 +17,7 @@ message CustomerCreateReply {
 
 message CustomerGetRequest {
   string customer_id = 1;
+  string stripe_account = 2;
 }
 
 message CustomerGetReply {
@@ -26,6 +28,7 @@ message CustomerGetReply {
 
 message CustomerDeleteRequest {
   string customer_id = 1;
+  string stripe_account = 2;
 }
 
 message CustomerDeleteReply {

@@ -23,6 +23,13 @@ func (s *ProductServer) CreateProduct(ctx context.Context, req *pb.CreateProduct
 	params := &stripe.ProductParams{
 		Name:        stripe.String(req.Name),
 		Description: stripe.String(req.Description),
+		DefaultPriceData: &stripe.ProductDefaultPriceDataParams{
+			Currency: stripe.String(string(stripe.CurrencyUSD)),
+			Recurring: &stripe.ProductDefaultPriceDataRecurringParams{
+				Interval: stripe.String(string(stripe.PriceRecurringIntervalMonth)),
+			},
+			UnitAmount: stripe.Int64(req.Amount),
+		},
 	}
 
 	for k, v := range req.Metadata {

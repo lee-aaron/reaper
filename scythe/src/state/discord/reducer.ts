@@ -43,14 +43,31 @@ export default createReducer(initialState, (builder) => {
       // parse payload into array of Guilds
       if (state.status === "loading") {
         state.status = "idle";
-        state.guilds = action.payload;
+        if (action.payload instanceof Array) {
+          state.guilds = action.payload;
+        } else {
+          state.guilds = [];
+        }
       }
     })
     .addCase(GetGuilds.rejected, (state, action) => {
-      state.status = "error";
-      state.guilds = [];
+      if (!action.meta.aborted) {
+        state.status = "error";
+        state.guilds = [];
+      }
     })
-    .addCase(GetUser, (state, action) => {
-      state.user = action.payload;
+    .addCase(GetUser.pending, (state) => {
+      state.status = "loading";
     })
+    .addCase(GetUser.fulfilled, (state, action) => {
+      if (state.status === "loading") {
+        state.status = "idle";
+        state.user = action.payload;
+      }
+    })
+    .addCase(GetUser.rejected, (state, action) => {
+      if (!action.meta.aborted) {
+        state.status = "error";
+      }
+    });
 });

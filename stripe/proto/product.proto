@@ -9,6 +9,7 @@ message CreateProductRequest {
   string description = 2;
   string stripe_account = 3;
   map <string, string> metadata = 4;
+  int64 amount = 5;
 }
 
 message CreateProductReply {
