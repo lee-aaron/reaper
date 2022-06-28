@@ -1,4 +1,12 @@
-import { Box, Card, CardHeader, Container, Grid, Paper, Typography, useTheme } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Container,
+  Grid,
+  Paper,
+  Typography,
+  useTheme
+} from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React from "react";
@@ -8,7 +16,7 @@ const Subscribe: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
-  const color = 'primary';
+  const color = "primary";
 
   if (!isAuthenticated) {
     router.push("/login");
@@ -34,15 +42,17 @@ const Subscribe: NextPage = () => {
         </Paper>
         <Grid container>
           <Grid item xs={12} md={6} lg={8}>
-            <Card sx={{
-              py: 5,
-              boxShadow: 1,
-              textAlign: 'center',
-              color: (theme) => theme.palette[color].light,
-              bgcolor: (theme) => theme.palette.background.paper,
-              my: theme.spacing(2),
-            }}>
-              <CardHeader title="Payments" subtitle="Handle Payments"/>
+            <Card
+              sx={{
+                py: 5,
+                boxShadow: 1,
+                textAlign: "center",
+                color: (theme) => theme.palette[color].light,
+                bgcolor: (theme) => theme.palette.background.paper,
+                my: theme.spacing(2),
+              }}
+            >
+              <CardHeader title="Payments" subtitle="Handle Payments" />
             </Card>
           </Grid>
         </Grid>

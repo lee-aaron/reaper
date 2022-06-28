@@ -7,15 +7,14 @@ import {
   Grid,
   Paper,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import React, { useEffect } from "react";
+import React from "react";
 import { CreateAccount } from "../../src/components/Account/";
 import AccountLink from "../../src/components/Account/AccountLink";
 import Payment from "../../src/components/Payment";
-import SubscriptionCard from "../../src/components/Subscription";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 import { useUser } from "../../src/state/discord/hooks";
 import { useOwner } from "../../src/state/payments/hooks";
@@ -74,11 +73,10 @@ const Create: NextPage = () => {
               py: theme.spacing(2),
             }}
           >
-            <Grid item xs={12} sm={6} md={8}>
+            <Grid item xs={12} sm={8} md={12}>
               <Card
                 sx={{
                   padding: theme.spacing(1, 1),
-                  display: "flex",
                   alignItems: "center",
                   flexWrap: "wrap",
                 }}
@@ -88,22 +86,6 @@ const Create: NextPage = () => {
                   subtitle="Subscription for Access to your Guild"
                 />
                 <Payment />
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={4}>
-              <Card
-                sx={{
-                  padding: theme.spacing(1, 1),
-                  display: "flex",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                }}
-              >
-                <CardHeader
-                  title="List of Subscriptions"
-                  subtitle="Click here to get started"
-                />
-                <SubscriptionCard />
               </Card>
             </Grid>
           </Grid>

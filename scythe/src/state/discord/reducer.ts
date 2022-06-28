@@ -15,6 +15,7 @@ export interface User {
   username: string;
   discriminator: string;
   email: string;
+  status: string;
 }
 
 export interface Discord {
@@ -31,6 +32,7 @@ export const initialState: Discord = {
     username: "",
     discriminator: "",
     email: "",
+    status: "idle",
   },
 };
 
@@ -57,17 +59,17 @@ export default createReducer(initialState, (builder) => {
       }
     })
     .addCase(GetUser.pending, (state) => {
-      state.status = "loading";
+      state.user.status = "loading";
     })
     .addCase(GetUser.fulfilled, (state, action) => {
-      if (state.status === "loading") {
-        state.status = "idle";
+      if (state.user.status === "loading") {
+        state.user.status = "idle";
         state.user = action.payload;
       }
     })
     .addCase(GetUser.rejected, (state, action) => {
       if (!action.meta.aborted) {
-        state.status = "error";
+        state.user.status = "error";
       }
     });
 });

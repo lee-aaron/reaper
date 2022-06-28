@@ -165,8 +165,7 @@ const Subscribe: NextPage = () => {
                   sx={{ maxWidth: 340, padding: "1rem", my: "1rem" }}
                   onClick={() => {
                     router.push({
-                      pathname: `/subscribe/${sub.discord_id}`,
-                      query: { prod_id: sub.prod_id },
+                      pathname: `/subscribe/${sub.discord_id}/${sub.prod_id}`
                     });
                   }}
                 >

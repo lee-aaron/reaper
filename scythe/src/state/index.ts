@@ -17,7 +17,7 @@ import authentication from "./authentication/reducer";
 import discord from "./discord/reducer";
 import payments from "./payments/reducer";
 
-const PERSISTED_KEYS: string[] = ["user", "authentication"];
+const PERSISTED_KEYS: string[] = ["user", "authentication", "payments"];
 
 const reducers = combineReducers({
   application,

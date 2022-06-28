@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { LoadingButton } from "@mui/lab";
 import {
   PaymentElement,
+  useElements,
   useStripe,
-  useElements
 } from "@stripe/react-stripe-js";
-import { Button } from "@mui/material";
-import Loading from "../Loading";
+import React, { useEffect, useState } from "react";
 
 const CheckoutForm: React.FC<{}> = () => {
   const stripe = useStripe();
@@ -60,7 +59,7 @@ const CheckoutForm: React.FC<{}> = () => {
       elements,
       confirmParams: {
         // Make sure to change this to your payment completion page
-        return_url: "http://localhost:3000",
+        return_url: window.location.href,
       },
     });
 
@@ -79,17 +78,22 @@ const CheckoutForm: React.FC<{}> = () => {
   };
 
   return (
-    <form id="payment-form" onSubmit={handleSubmit}>
-      <PaymentElement id="payment-element" />
-      <Button disabled={isLoading || !stripe || !elements} id="submit" size="small">
-        <span id="button-text">
-          {isLoading ? <Loading /> : "Pay now"}
-        </span>
-      </Button>
-      {/* Show any error or success messages */}
-      {message && <div id="payment-message">{message}</div>}
-    </form>
+    <React.Fragment>
+      <form id="payment-form" onSubmit={handleSubmit}>
+        <PaymentElement id="payment-element" />
+        <LoadingButton
+          loading={isLoading}
+          disabled={isLoading || !stripe || !elements}
+          size="small"
+          type="submit"
+        >
+          Pay Now
+        </LoadingButton>
+        {/* Show any error or success messages */}
+        {message && <div id="payment-message">{message}</div>}
+      </form>
+    </React.Fragment>
   );
-}
+};
 
 export default CheckoutForm;

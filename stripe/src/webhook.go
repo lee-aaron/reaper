@@ -77,9 +77,6 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-	case "checkout.session.completed":
-		// Payment is successful and the subscription is created.
-		// You should provision the subscription and save the customer ID to your database.
 	case "invoice.paid":
 		// Continue to provision the subscription as payments continue to be made.
 		// Store the status in your database and check when a user accesses your service.
@@ -90,6 +87,10 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		// customer portal to update their payment information.
 	case "customer.subscription.deleted":
 		// The subscription has been cancelled.
+	case "customer.subscription.updated":
+		// The subscription has been updated.
+		// Check status field to determine if the subscription is active or past_due.
+		// Provision the subscription
 	default:
 		// unhandled event type
 		fmt.Fprintf(os.Stderr, "Unhandled event type: %s\n", event.Type)

@@ -67,7 +67,7 @@ const Home: NextPage = () => {
                 monthly maintenance fees.
               </Typography>
               <Typography variant="body1" align="center">
-                Current management fee is 20% per user per month with a minimum
+                Current management fee is 10% per user per month with a minimum
                 subscription amount of $10.
               </Typography>
             </Paper>

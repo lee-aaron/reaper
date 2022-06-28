@@ -1,7 +1,15 @@
-import { Container, Grid, Paper, Typography, useTheme } from "@mui/material";
+import {
+  Card,
+  CardHeader,
+  Container,
+  Grid,
+  Paper,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
-import React from "react";
+import React, { useEffect } from "react";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 const Dashboard: NextPage = () => {
@@ -12,6 +20,11 @@ const Dashboard: NextPage = () => {
   if (!isAuthenticated) {
     router.push("/login");
   }
+
+  useEffect(() => {
+    // fetch subscriptions and current status
+    // fetch customer portal url
+  }, []);
 
   return (
     <React.Fragment>
@@ -39,7 +52,16 @@ const Dashboard: NextPage = () => {
             py: theme.spacing(2),
           }}
         >
-          <Grid item></Grid>
+          <Grid item>
+            <Card>
+              <CardHeader title="Created Subscriptions" />
+            </Card>
+          </Grid>
+          <Grid item>
+            <Card>
+              <CardHeader title="Current Subscriptions" />
+            </Card>
+          </Grid>
         </Grid>
       </Container>
     </React.Fragment>

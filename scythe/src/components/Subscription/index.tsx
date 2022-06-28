@@ -17,6 +17,8 @@ const SubscriptionCard: React.FC<{}> = () => {
   const user = useUser();
 
   useEffect(() => {
+    if (!user.id || !user.email) return;
+
     let query = {
       email: user.email
     }
@@ -40,7 +42,7 @@ const SubscriptionCard: React.FC<{}> = () => {
       })
       setSubscriptions(prods);
     }).catch(e => console.error(e));
-  }, []);
+  }, [user]);
 
   return (
     <React.Fragment>
