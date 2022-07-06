@@ -1,0 +1,307 @@
+{
+  "db": "PostgreSQL",
+  "21747c6e9692d191a05c5d781a618ae29369b692aa69dcf924445f7e90e578bf": {
+    "describe": {
+      "columns": [
+        {
+          "name": "stripe_account_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "status",
+          "ordinal": 1,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT stripe_account_id, status FROM accounts WHERE discord_id = $1\n        "
+  },
+  "2882472c3f6ca254920d3877d35a46ba886965ef3a196ea5c563f92eaad838e0": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO guilds (discord_id, guild_id)\n            VALUES ($1, $2)\n            ON CONFLICT (discord_id) DO UPDATE set guild_id = COALESCE(EXCLUDED.guild_id, guilds.guild_id)\n            "
+  },
+  "4eb36a75c0f23eca9df26efeeb806fe1e89643805edcacc87866ed9f37b86e36": {
+    "describe": {
+      "columns": [
+        {
+          "name": "discord_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "TextArray"
+        ]
+      }
+    },
+    "query": "\n            SELECT discord_id FROM guilds WHERE guild_id @> $1\n            "
+  },
+  "578444fe0c98c96ed162934f0208d412228a07dd51d5ee4de6287fe3c42d4466": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            UPDATE accounts SET status = $1 WHERE stripe_account_id = $2\n            "
+  },
+  "6843ab5a0ee089d4e2b66635aee2e66c6c14527abe1ee1e690fdab5a69e00bab": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO accounts (discord_id, username, email, stripe_account_id, status)\n            VALUES ($1, $2, $3, $4, 'pending')\n            "
+  },
+  "85de3c13b88da9b3e8d3b78bb43dfad61e2e771ebeac9f89424d934e9a3bd8b2": {
+    "describe": {
+      "columns": [
+        {
+          "name": "prod_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_description",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_icon",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_price",
+          "ordinal": 6,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT prod_id, discord_id, discord_name, subscription_name, subscription_description, discord_icon, subscription_price\n        FROM subscriptions\n        WHERE discord_name ILIKE $1 || '%'\n    "
+  },
+  "979326a6130550045200b5d7d2ea109e5931bf98ef3e0e7d344f9542e62995e4": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            DELETE FROM accounts WHERE discord_id = $1\n            "
+  },
+  "c1b6d284bb210d3f5a250fcd0384ad82993a474387494f57b7e7ab0814c2e598": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO subscriptions (prod_id, discord_id, subscription_name, subscription_description, discord_name, discord_icon, subscription_price)\n            VALUES ($1, $2, $3, $4, $5, $6, $7)\n            "
+  },
+  "c89b55bf84908c309897ef87c3c18f56939d7f44bb75b7819e2edeb2e01832e5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO customers (cus_id, discord_id, server_id, cus_name, cus_email)\n            VALUES ($1, $2, $3, $4, $5)\n            "
+  },
+  "df2f56e17ef5e8effce498d24bd9038d49472e5e2c71a0686cf862d212fbb6bc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "cus_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_id",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "cus_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "cus_email",
+          "ordinal": 4,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT * FROM customers WHERE server_id = $1 AND discord_id = $2\n        "
+  },
+  "f468819b6b0ad33dc9019bf94a51acc6d8f49793ab6b976ad23c192e9440841e": {
+    "describe": {
+      "columns": [
+        {
+          "name": "discord_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "discord_icon",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_name",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_description",
+          "ordinal": 4,
+          "type_info": "Text"
+        },
+        {
+          "name": "subscription_price",
+          "ordinal": 5,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT discord_id, discord_name, discord_icon, subscription_name, subscription_description, subscription_price FROM subscriptions\n            WHERE prod_id = $1\n            "
+  },
+  "fc4dfdd9359dda53e8ebc99c8f61a2bdacb74f361d59327d3de6f881af27bd35": {
+    "describe": {
+      "columns": [
+        {
+          "name": "server_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT server_id FROM customers WHERE cus_id = $1\n            "
+  }
+}

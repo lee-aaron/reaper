@@ -85,6 +85,25 @@ impl CustomerClient {
         Ok(())
     }
 
+    #[tracing::instrument(name = "update_customer_prod_id", skip(transaction, self))]
+    pub async fn update_customer_prod_id(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        cus_id: String,
+        prod_id: String,
+    ) -> Result<(), anyhow::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE customers SET prod_id = $1 WHERE cus_id = $2
+            "#,
+            prod_id,
+            cus_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
+
     #[tracing::instrument(name = "get_customer_info", skip(pool, self))]
     pub async fn get_server_id(
         &self,
@@ -159,9 +178,9 @@ pub async fn create_customer(
             &mut transaction,
             reply.customer_id.clone(),
             discord_id.to_string(),
-            customer.0.server_id,
+            customer.0.server_id.clone(),
             customer.0.customer_name,
-            customer.0.customer_email,
+            customer.0.customer_email
         )
         .await
         .context("Failed to create a customer in the database")
@@ -174,44 +193,45 @@ pub async fn create_customer(
         .map_err(e500)?;
 
     Ok(HttpResponse::Ok().json(json!({
-        "id": reply.customer_id
+        "id": reply.customer_id,
+        "server_id": customer.0.server_id,
     })))
 }
 
-pub async fn get_customer(
-    query: web::Query<CustomerIdInfo>,
-    client: web::Data<Payment>,
-    pg: web::Data<PgPool>,
-) -> Result<HttpResponse, actix_web::Error> {
-    let server_id = client
-        .customer_client
-        .get_server_id(&pg, query.0.customer_id.clone())
-        .await
-        .map_err(e500)?;
+// pub async fn get_customer(
+//     query: web::Query<CustomerIdInfo>,
+//     client: web::Data<Payment>,
+//     pg: web::Data<PgPool>,
+// ) -> Result<HttpResponse, actix_web::Error> {
+//     let server_id = client
+//         .customer_client
+//         .get_server_id(&pg, query.0.customer_id.clone())
+//         .await
+//         .map_err(e500)?;
 
-    let (stripe_account_id, _) = client
-        .account_client
-        .get_account(&pg, server_id)
-        .await
-        .map_err(e500)?;
+//     let (stripe_account_id, _) = client
+//         .account_client
+//         .get_account(&pg, server_id)
+//         .await
+//         .map_err(e500)?;
 
-    let mut cus_client = client.customer_client.clone();
-    let result = cus_client
-        .client
-        .get_customer(CustomerGetRequest {
-            customer_id: query.0.customer_id,
-            stripe_account: stripe_account_id,
-        })
-        .await
-        .map_err(e500)?;
+//     let mut cus_client = client.customer_client.clone();
+//     let result = cus_client
+//         .client
+//         .get_customer(CustomerGetRequest {
+//             customer_id: query.0.customer_id,
+//             stripe_account: stripe_account_id,
+//         })
+//         .await
+//         .map_err(e500)?;
 
-    let reply = result.into_inner();
-    Ok(HttpResponse::Ok().json(json!({
-        "customer_name": reply.customer_name,
-        "customer_email": reply.customer_email,
-        "metadata": reply.metadata,
-    })))
-}
+//     let reply = result.into_inner();
+//     Ok(HttpResponse::Ok().json(json!({
+//         "customer_name": reply.customer_name,
+//         "customer_email": reply.customer_email,
+//         "metadata": reply.metadata,
+//     })))
+// }
 
 pub async fn get_customer_db(
     query: web::Query<CustomerGetInfo>,
@@ -234,6 +254,8 @@ pub async fn get_customer_db(
             "customer_id": row.cus_id,
             "customer_name": row.cus_name,
             "customer_email": row.cus_email,
+            "server_id": query.0.server_id,
+            "prod_id": row.prod_id,
         })))
     } else {
         Err(e500("Failed to get customer info"))

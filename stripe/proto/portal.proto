@@ -7,6 +7,7 @@ option go_package = "github.com/lee-aaron/stripe-go/portal";
 message CreatePortalRequest {
   string customer_id = 1;
   string return_url = 2;
+  string stripe_account = 3;
 }
 
 message CreatePortalReply {

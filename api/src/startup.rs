@@ -113,7 +113,8 @@ async fn run(
                     .route("/create_customer", web::post().to(create_customer))
                     .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/create_subscription", web::post().to(create_subscription))
-                    .route("/search_subscription", web::get().to(search_subscriptions)),
+                    .route("/search_subscription", web::get().to(search_subscriptions))
+                    .route("/create_portal", web::get().to(create_portal)),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

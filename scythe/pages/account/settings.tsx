@@ -1,5 +1,6 @@
 import {
   Card,
+  CardContent,
   CardHeader,
   Container,
   Grid,
@@ -53,6 +54,11 @@ const Subscribe: NextPage = () => {
               }}
             >
               <CardHeader title="Payments" subtitle="Handle Payments" />
+              <CardContent>
+                <Typography variant="subtitle1">
+                  Cancel Payments
+                </Typography>
+              </CardContent>
             </Card>
           </Grid>
         </Grid>

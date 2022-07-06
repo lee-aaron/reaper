@@ -9,7 +9,12 @@ import {
 } from "./actions";
 
 export interface Customer {
-  id: string;
+  id: {
+    [key: string]: {
+      prod_id: string;
+      server_id: string;
+    };
+  };
   loading: string;
   secret: { [key: string]: string };
   prod_id: { [key: string]: string };
@@ -37,7 +42,7 @@ export const initialState: {
   sub: Subscription;
 } = {
   cus: {
-    id: "",
+    id: {},
     loading: "",
     secret: {},
     prod_id: {},
@@ -96,7 +101,10 @@ export default createReducer(initialState, (builder) => {
     .addCase(CreateCustomer.fulfilled, (state, action) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
-        state.cus.id = action.payload.id;
+        state.cus.id[action.payload.customer_id] = {
+          prod_id: action.payload.prod_id,
+          server_id: action.payload.server_id,
+        };
       }
     })
     .addCase(CreateCustomer.rejected, (state, action) => {
@@ -110,7 +118,10 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetCustomer.fulfilled, (state, action) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
-        state.cus.id = action.payload.customer_id;
+        state.cus.id[action.payload.customer_id] = {
+          prod_id: action.payload.prod_id,
+          server_id: action.payload.server_id,
+        };
       }
     })
     .addCase(GetCustomer.rejected, (state, action) => {
@@ -143,13 +154,15 @@ export default createReducer(initialState, (builder) => {
     .addCase(CreateSubscription.fulfilled, (state, action) => {
       if (state.sub.loading === "loading") {
         state.sub.loading = "idle";
-        state.cus.secret[action.payload.product_id] = action.payload.client_secret;
-        state.cus.prod_id[action.payload.product_id] = action.payload.stripe_account;
+        state.cus.secret[action.payload.product_id] =
+          action.payload.client_secret;
+        state.cus.prod_id[action.payload.product_id] =
+          action.payload.stripe_account;
       }
     })
     .addCase(CreateSubscription.rejected, (state, action) => {
       if (!action.meta.aborted) {
         state.sub.loading = "error";
       }
-    })
+    });
 });

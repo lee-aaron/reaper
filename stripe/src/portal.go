@@ -23,6 +23,8 @@ func (srv *PortalServer) CreatePortal(ctx context.Context, req *pb.CreatePortalR
 		Customer:  stripe.String(req.CustomerId),
 		ReturnURL: stripe.String(req.ReturnUrl),
 	}
+	params.SetStripeAccount(req.StripeAccount)
+
 	s, err := session.New(params)
 	if err != nil {
 		return nil, err

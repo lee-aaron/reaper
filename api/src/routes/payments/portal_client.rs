@@ -1,7 +1,11 @@
-use stripe_server::payments_v1::{
-    portal_handler_client::PortalHandlerClient, CreatePortalRequest,
-};
+use actix_web::{web, HttpResponse};
+use sqlx::PgPool;
+use stripe_server::payments_v1::{portal_handler_client::PortalHandlerClient, CreatePortalRequest};
 use tonic::transport::{Channel, Uri};
+
+use crate::utils::{e500, see_other};
+
+use super::Payment;
 
 #[derive(Clone)]
 pub struct PortalClient {
@@ -30,24 +34,44 @@ impl PortalClient {
         let client = PortalHandlerClient::new(channel.clone());
         PortalClient { client }
     }
+}
 
-    // Client side calls
-    pub async fn create_portal(
-        &mut self,
-        customer_id: String,
-        return_url: String,
-    ) -> Result<String, anyhow::Error> {
-        let request = CreatePortalRequest {
-            customer_id,
-            return_url,
-        };
-        let result = self.client.create_portal(request).await;
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct PortalInfoReq {
+    pub customer_id: String,
+    pub return_url: String,
+    pub server_id: String,
+}
 
-        if let Ok(reply) = result {
-            let values = reply.into_inner();
-            Ok(values.portal_url)
-        } else {
-            Err(anyhow::anyhow!("Failed to create portal"))
-        }
-    }
+// Client side calls
+pub async fn create_portal(
+    query: web::Query<PortalInfoReq>,
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let mut portal_client = client.portal_client.clone();
+
+    // look up stripe account id with server id
+    let owner_id = client
+        .product_client
+        .get_owner_id_from_guilds(&pg, query.0.server_id.clone())
+        .await
+        .map_err(e500)?;
+    let (stripe_account_id, _) = client
+        .account_client
+        .get_account(&pg, owner_id)
+        .await
+        .map_err(e500)?;
+
+    let url = portal_client
+        .client
+        .create_portal(CreatePortalRequest {
+            customer_id: query.0.customer_id,
+            return_url: query.0.return_url,
+            stripe_account: stripe_account_id,
+        })
+        .await
+        .map_err(e500)?;
+
+    Ok(see_other(&url.into_inner().portal_url))
 }

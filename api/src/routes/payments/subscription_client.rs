@@ -1,4 +1,5 @@
 use actix_web::{http::Uri, web, HttpResponse};
+use anyhow::Context;
 use serde_json::json;
 use sqlx::{PgPool, Postgres, Transaction};
 use stripe_server::payments_v1::{
@@ -111,6 +112,23 @@ pub async fn create_subscription(
     let (stripe_account_id, _) = client
         .account_client
         .get_account(&pg, owner_id)
+        .await
+        .map_err(e500)?;
+
+    // insert into customer db
+    let mut transaction = pg
+        .begin()
+        .await
+        .context("Failed to acquire a Postgres connection from the pool")
+        .map_err(e500)?;
+
+    client
+        .customer_client
+        .update_customer_prod_id(
+            &mut transaction,
+            req.0.customer_id.clone(),
+            req.0.prod_id.clone(),
+        )
         .await
         .map_err(e500)?;
 

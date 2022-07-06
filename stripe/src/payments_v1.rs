@@ -171,6 +171,8 @@ pub struct CreatePortalRequest {
     pub customer_id: ::prost::alloc::string::String,
     #[prost(string, tag="2")]
     pub return_url: ::prost::alloc::string::String,
+    #[prost(string, tag="3")]
+    pub stripe_account: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreatePortalReply {
