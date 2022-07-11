@@ -1,7 +1,7 @@
 use actix_web::{web, HttpResponse};
 use anyhow::Context;
 use serde_json::json;
-use sqlx::PgPool;
+use sqlx::{PgPool, Postgres, Transaction};
 
 use crate::{session_state::TypedSession, utils::e500};
 
@@ -31,16 +31,13 @@ pub struct GuildRequest {
 
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct GuildResponse {
-    pub prod_id: String,
-    pub discord_id: String,
-    pub discord_name: String,
-    pub subscription_name: String,
-    pub subscription_description: String,
-    pub subscription_price: String,
-    pub discord_icon: String,
+    pub server_id: String,
+    pub name: String,
+    pub description: String,
+    pub icon: String,
 }
 
-#[tracing::instrument(name = "search_guilds", skip(pg))]
+#[tracing::instrument(name = "Search for Guilds", skip(pg))]
 pub async fn search_guilds(
     guild: web::Query<GuildRequest>,
     pg: web::Data<PgPool>,
@@ -60,9 +57,9 @@ pub async fn search_guilds(
     let rows = sqlx::query_as!(
         GuildResponse,
         r#"
-        SELECT prod_id, discord_id, discord_name, subscription_name, subscription_description, discord_icon, subscription_price
-        FROM subscriptions
-        WHERE discord_name ILIKE $1 || '%'
+        SELECT *
+        FROM guild_info
+        WHERE name ILIKE $1 || '%'
     "#,
         guild.0.discord_name
     )
@@ -73,5 +70,79 @@ pub async fn search_guilds(
 
     Ok(HttpResponse::Ok()
         .content_type("application/json")
-        .body(serde_json::to_string(&rows).unwrap()))
+        .json(rows))
+}
+
+#[derive(Debug)]
+pub struct GuildInfo {
+    pub server_id: String,
+    pub name: String,
+    pub description: String,
+    pub icon: String,
+}
+
+#[tracing::instrument(name = "Insert Guild Info", skip(transaction, guild_info))]
+pub async fn insert_guild_info(
+    transaction: &mut Transaction<'_, Postgres>,
+    guild_info: &GuildInfo,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO guild_info (server_id, name, description, icon)
+        VALUES ($1, $2, $3, $4)
+        on conflict (server_id) do nothing
+        "#,
+        guild_info.server_id,
+        guild_info.name,
+        guild_info.description,
+        guild_info.icon
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}
+
+#[tracing::instrument(name = "Insert Guilds", skip(transaction))]
+pub async fn insert_guilds(
+    transaction: &mut Transaction<'_, Postgres>,
+    discord_id: String,
+    server_id: String,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO guilds (discord_id, server_id)
+        VALUES ($1, $2)
+        on conflict (server_id) do nothing
+        "#,
+        discord_id,
+        server_id
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
+}
+
+#[tracing::instrument(name = "Get Owner Id from Guild Id", skip(pool))]
+pub async fn get_owner_id(pool: &PgPool, guild_id: String) -> Result<Option<String>, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"SELECT discord_id from guilds where server_id = $1"#,
+        guild_id
+    )
+    .fetch_optional(pool)
+    .await?;
+    Ok(result.map(|r| r.discord_id))
+}
+
+#[tracing::instrument(name = "Get Owner's Guilds", skip(pool))]
+pub async fn get_owner_guilds(
+    pool: &PgPool,
+    discord_id: String,
+) -> Result<Vec<String>, sqlx::Error> {
+    let result = sqlx::query!(
+        r#"SELECT server_id from guilds where discord_id = $1"#,
+        discord_id
+    )
+    .fetch_all(pool)
+    .await?;
+    Ok(result.into_iter().map(|r| r.server_id).collect())
 }

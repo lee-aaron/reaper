@@ -280,6 +280,18 @@ pub struct CreateSubscriptionReply {
     #[prost(string, tag="2")]
     pub client_secret: ::prost::alloc::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CancelSubscriptionRequest {
+    #[prost(string, tag="1")]
+    pub subscription_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub stripe_account: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CancelSubscriptionReply {
+    #[prost(bool, tag="1")]
+    pub success: bool,
+}
 /// Generated client implementations.
 pub mod subscription_handler_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -363,6 +375,25 @@ pub mod subscription_handler_client {
             );
             self.inner.unary(request.into_request(), path, codec).await
         }
+        pub async fn cancel_subscription(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CancelSubscriptionRequest>,
+        ) -> Result<tonic::Response<super::CancelSubscriptionReply>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/payments_v1.SubscriptionHandler/CancelSubscription",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -381,7 +412,9 @@ pub struct CreateProductRequest {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct CreateProductReply {
     #[prost(string, tag="1")]
-    pub id: ::prost::alloc::string::String,
+    pub prod_id: ::prost::alloc::string::String,
+    #[prost(string, tag="2")]
+    pub price_id: ::prost::alloc::string::String,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GetProductRequest {

@@ -1,9 +1,6 @@
-use std::collections::HashMap;
-
 use actix_web::{web, HttpResponse};
-use anyhow::Context;
 use sqlx::{PgPool, Postgres, Transaction};
-use stripe_server::payments_v1::{product_handler_client::ProductHandlerClient, *};
+use stripe_server::payments_v1::product_handler_client::ProductHandlerClient;
 use tonic::transport::{Channel, Uri};
 
 use crate::utils::e500;
@@ -13,6 +10,16 @@ use super::Payment;
 #[derive(Clone)]
 pub struct ProductClient {
     pub client: ProductHandlerClient<Channel>,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SubInfo {
+    pub prod_id: String,
+    pub price_id: String,
+    pub sub_name: String,
+    pub sub_description: String,
+    pub server_id: String,
+    pub num_subscribed: i32,
 }
 
 impl ProductClient {
@@ -38,108 +45,149 @@ impl ProductClient {
         ProductClient { client }
     }
 
-    pub async fn insert_into_guilds(
+    #[tracing::instrument(name = "Creating Sub Info in DB", skip(transaction, self))]
+    pub async fn create_product(
         &self,
         transaction: &mut Transaction<'_, Postgres>,
-        owner_id: String,
-        guild_id: String,
+        sub_info: &SubInfo,
     ) -> Result<(), sqlx::Error> {
-        let array = vec![guild_id];
         sqlx::query!(
             r#"
-            INSERT INTO guilds (discord_id, guild_id)
-            VALUES ($1, $2)
-            ON CONFLICT (discord_id) DO UPDATE set guild_id = COALESCE(EXCLUDED.guild_id, guilds.guild_id)
+            INSERT INTO sub_info (prod_id, price_id, sub_name, sub_description, server_id, num_subscribed)
+            VALUES ($1, $2, $3, $4, $5, $6)
             "#,
-            owner_id,
-            &array
+            sub_info.prod_id,
+            sub_info.price_id,
+            sub_info.sub_name,
+            sub_info.sub_description,
+            sub_info.server_id,
+            sub_info.num_subscribed
+        ).execute(transaction).await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(name = "Increment Sub Info in DB", skip(transaction, self))]
+    pub async fn increment_product(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        prod_id: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE sub_info
+            SET num_subscribed = num_subscribed + 1
+            WHERE prod_id = $1
+            "#,
+            prod_id
         )
         .execute(transaction)
         .await?;
         Ok(())
     }
 
-    pub async fn get_owner_id_from_guilds(
+    #[tracing::instrument(name = "Decrement Sub Info in DB", skip(transaction, self))]
+    pub async fn decrement_product(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        prod_id: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE sub_info
+            SET num_subscribed = num_subscribed - 1
+            WHERE prod_id = $1
+            "#,
+            prod_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(name = "Getting Products from DB", skip(pool, self))]
+    pub async fn get_product(
         &self,
         pool: &PgPool,
-        guild_id: String,
-    ) -> Result<String, anyhow::Error> {
-        let array = vec![guild_id];
-        let row = sqlx::query!(
+        prod_id: String,
+    ) -> Result<SearchProduct, sqlx::Error> {
+        let rows = sqlx::query_as!(
+            SearchProduct,
             r#"
-            SELECT discord_id FROM guilds WHERE guild_id @> $1
-            "#,
-            &array
+        SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s 
+        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id WHERE s.prod_id = $1 
+        "#,
+            prod_id
         )
-        .fetch_optional(pool)
-        .await
-        .context("Failed to perform a query to get owner id")?;
+        .fetch_one(pool)
+        .await?;
+        Ok(rows)
+    }
 
-        if let Some(row) = row {
-            Ok(row.discord_id)
-        } else {
-            Err(anyhow::anyhow!("Failed to get owner id"))
-        }
+    #[tracing::instrument(name = "Getting Owner Products from DB", skip(pool, self))]
+    pub async fn get_owner_products(
+        &self,
+        pool: &PgPool,
+        discord_id: String,
+    ) -> Result<Vec<SearchProduct>, sqlx::Error> {
+        let rows = sqlx::query_as!(
+            SearchProduct,
+            r#"
+        SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s 
+        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id 
+        WHERE s.server_id in (select server_id from guilds where discord_id = $1)
+        "#,
+            discord_id
+        )
+        .fetch_all(pool)
+        .await?;
+        Ok(rows)
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
-pub struct ProductInfo {
-    pub query: String,
-    pub discord_id: String,
-}
-
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
-pub struct DeleteProduct {
-    pub product_id: String,
-    pub discord_id: String,
-}
-
-pub async fn search_product(
-    product: web::Query<ProductInfo>,
+// owner's products from DB
+pub async fn search_owner_product(
+    product: web::Query<String>,
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
 ) -> Result<HttpResponse, actix_web::Error> {
-    // fetch stripe account id from postgres db
-    let (stripe_account_id, _) = client
-        .account_client
-        .get_account(&pg, product.0.discord_id.clone())
+    // search product from DB using owner's discord_id
+    let results = client
+        .product_client
+        .get_owner_products(&pg, product.into_inner())
         .await
         .map_err(e500)?;
 
-    // convert query to metadata search
-    let query = serde_json::from_str::<HashMap<String, String>>(&product.0.query).unwrap();
-    let metadata = query
-        .iter()
-        .map(|(key, value)| format!("metadata[\"{}\"]:\"{}\"", key, value))
-        .collect::<Vec<String>>()
-        .join(" AND ");
+    Ok(HttpResponse::Ok().json(results))
+}
 
-    let mut prd_client = client.product_client.clone();
-    let result = prd_client
-        .client
-        .search_product(SearchProductRequest {
-            query: metadata,
-            limit: None,
-            page: None,
-            stripe_account: stripe_account_id.clone(),
-        })
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SearchProductRequest {
+    pub prod_id: String,
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SearchProduct {
+    pub prod_id: String,
+    pub price_id: String,
+    pub sub_price: i32,
+    pub sub_name: String,
+    pub sub_description: String,
+    pub server_id: String,
+    pub num_subscribed: i32,
+}
+
+// customer searching for products given prod_id
+pub async fn search_product(
+    product: web::Query<SearchProductRequest>,
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+) -> Result<HttpResponse, actix_web::Error> {
+    // search product from DB using prod id
+    let prod = client
+        .product_client
+        .get_product(&pg, product.0.prod_id.clone())
         .await
         .map_err(e500)?;
 
-    let reply = result.into_inner();
-
-    Ok(HttpResponse::Ok().json(
-        reply
-            .products
-            .into_iter()
-            .map(|prd| Product {
-                id: prd.id,
-                name: prd.name,
-                description: prd.description,
-                metadata: prd.metadata,
-                amount: prd.amount.checked_div(100).unwrap(),
-            })
-            .collect::<Vec<Product>>(),
-    ))
+    Ok(HttpResponse::Ok().json(prod))
 }

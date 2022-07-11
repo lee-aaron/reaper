@@ -18,6 +18,15 @@ pub struct AccountClient {
     pub client: AccountHandlerClient<Channel>,
 }
 
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct OwnerObject {
+    pub discord_id: String,
+    pub name: String,
+    pub email: String,
+    pub stripe_id: String,
+    pub status: String,
+}
+
 impl AccountClient {
     pub fn new(addr: &str) -> Self {
         let addr = addr.to_string();
@@ -41,50 +50,68 @@ impl AccountClient {
         AccountClient { client }
     }
 
-    #[tracing::instrument(name = "get_account", skip(pool, self))]
-    pub async fn get_account(&self, pool: &PgPool, id: String) -> Result<(String, String), anyhow::Error> {
-        let row = sqlx::query!(
-            r#"
-        SELECT stripe_account_id, status FROM accounts WHERE discord_id = $1
-        "#,
-            id
-        )
-        .fetch_optional(pool)
-        .await
-        .context("Failed to perform a query to retrieve an account")?;
-        if row.is_some() {
-            let row = row.unwrap();
-            Ok((row.stripe_account_id, row.status))
-        } else {
-            Err(anyhow::anyhow!("No account found for this user"))
-        }
-    }
-
-    #[tracing::instrument(name = "create_account", skip(transaction, self))]
+    #[tracing::instrument(name = "Creating Account in DB", skip(transaction, self))]
     pub async fn create_account(
         &self,
         transaction: &mut Transaction<'_, Postgres>,
         discord_id: String,
-        username: String,
-        stripe_account_id: String,
+        name: String,
+        stripe_id: String,
         email: String,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            INSERT INTO accounts (discord_id, username, email, stripe_account_id, status)
+            INSERT INTO owners (discord_id, name, email, stripe_id, status)
             VALUES ($1, $2, $3, $4, 'pending')
             "#,
             discord_id,
-            username,
+            name,
             email,
-            stripe_account_id
+            stripe_id
         )
         .execute(transaction)
         .await?;
         Ok(())
     }
 
-    #[tracing::instrument(name = "delete_account", skip(self, transaction))]
+    #[tracing::instrument(name = "Getting Account in DB", skip(pool, self))]
+    pub async fn get_account(
+        &self,
+        pool: &PgPool,
+        discord_id: String,
+    ) -> Result<Option<OwnerObject>, sqlx::Error> {
+        let row = sqlx::query_as!(
+            OwnerObject,
+            r#"
+        SELECT * FROM owners WHERE discord_id = $1
+        "#,
+            discord_id
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(row)
+    }
+
+    #[tracing::instrument(name = "Confirm Account in DB", skip(self, transaction))]
+    pub async fn confirm_account(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        stripe_id: String,
+        status: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE owners SET status = $1 WHERE stripe_id = $2
+            "#,
+            status,
+            stripe_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
+
+    #[tracing::instrument(name = "Delete Account in DB", skip(self, transaction))]
     pub async fn delete_account(
         &self,
         transaction: &mut Transaction<'_, Postgres>,
@@ -92,27 +119,9 @@ impl AccountClient {
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            DELETE FROM accounts WHERE discord_id = $1
+            DELETE FROM owners WHERE discord_id = $1
             "#,
             discord_id
-        ).execute(transaction)
-        .await?;
-        Ok(())
-    }
-
-    #[tracing::instrument(name = "update_account", skip(self, transaction))]
-    pub async fn update_account(
-        &self,
-        transaction: &mut Transaction<'_, Postgres>,
-        stripe_account_id: String,
-        status: String,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            r#"
-            UPDATE accounts SET status = $1 WHERE stripe_account_id = $2
-            "#,
-            status,
-            stripe_account_id
         )
         .execute(transaction)
         .await?;
@@ -172,7 +181,11 @@ pub async fn create_account(
         .context("Failed to create a new account")
         .map_err(e500)?;
 
-    transaction.commit().await.context("Failed to commit the transaction").map_err(e500)?;
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit the transaction")
+        .map_err(e500)?;
 
     // create account link
     let result = acc_client
@@ -196,6 +209,8 @@ pub async fn create_account(
 pub enum AccountError {
     #[error("Account not found")]
     AccountNotFound,
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
 }
 
 impl std::fmt::Debug for AccountError {
@@ -208,6 +223,7 @@ impl ResponseError for AccountError {
     fn status_code(&self) -> StatusCode {
         match self {
             AccountError::AccountNotFound => StatusCode::NOT_FOUND,
+            AccountError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }
@@ -217,6 +233,21 @@ pub struct DiscordInfo {
     pub discord_id: String,
 }
 
+pub async fn get_account(
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+    query: web::Query<DiscordInfo>,
+) -> Result<HttpResponse, AccountError> {
+    let owner = client
+        .account_client
+        .get_account(&pg, query.0.discord_id.clone())
+        .await
+        .context("Failed to retrieve the account")?
+        .ok_or(AccountError::AccountNotFound)?;
+
+    Ok(HttpResponse::Ok().json(owner))
+}
+
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct AccountLinkInfo {
     pub discord_id: String,
@@ -224,43 +255,28 @@ pub struct AccountLinkInfo {
     pub return_url: String,
 }
 
-pub async fn get_account(
-    client: web::Data<Payment>,
-    pg: web::Data<PgPool>,
-    query: web::Query<DiscordInfo>,
-) -> Result<HttpResponse, actix_web::Error> {
-
-    let account_tuple = client
-        .account_client
-        .get_account(&pg, query.0.discord_id.clone())
-        .await
-        .map_err(e500)?;
-
-    Ok(HttpResponse::Ok().json(account_tuple))
-}
-
 pub async fn get_account_link(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
     query: web::Query<AccountLinkInfo>,
-) -> Result<HttpResponse, actix_web::Error> {
-
-    let (stripe_account_id, _) = client
+) -> Result<HttpResponse, AccountError> {
+    let owner = client
         .account_client
         .get_account(&pg, query.0.discord_id.clone())
         .await
-        .map_err(e500)?;
+        .context("Failed to retrieve the account")?
+        .ok_or(AccountError::AccountNotFound)?;
 
     let mut acc_client = client.account_client.clone();
     let result = acc_client
         .client
         .create_account_link(CreateAccountLinkRequest {
-            account_id: stripe_account_id,
+            account_id: owner.stripe_id.clone(),
             refresh_url: query.0.refresh_url,
             return_url: query.0.return_url,
         })
         .await
-        .map_err(e500)?
+        .context("Failed to retrieve the account")?
         .into_inner();
 
     Ok(HttpResponse::Ok().json(json!({
@@ -273,54 +289,67 @@ pub async fn delete_account(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
     query: web::Json<String>,
-) -> Result<HttpResponse, actix_web::Error> {
-    
+) -> Result<HttpResponse, AccountError> {
     let mut acc_client = client.account_client.clone();
 
-    let (stripe_account_id, _) = client
+    let owner = client
         .account_client
         .get_account(&pg, query.0.clone())
         .await
-        .map_err(e500)?;
+        .context("Failed to retrieve the account")?
+        .ok_or(AccountError::AccountNotFound)?;
 
     let mut transaction = pg
         .begin()
         .await
-        .context("Failed to acquire a Postgres connection from the pool")
-        .map_err(e500)?;
+        .context("Failed to acquire a Postgres connection from the pool")?;
 
-    client.account_client.delete_account(&mut transaction, query.0).await.map_err(e500)?;
+    client
+        .account_client
+        .delete_account(&mut transaction, query.0)
+        .await
+        .context("Failed to delete the account")?;
 
     acc_client
         .client
         .delete_account(DeleteAccountRequest {
-            account_id: stripe_account_id,
+            account_id: owner.stripe_id.clone(),
         })
         .await
-        .map_err(e500)?;
+        .context("Failed to delete the account")?;
 
-    transaction.commit().await.context("Failed to commit the transaction").map_err(e500)?;
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit the transaction")?;
 
     Ok(HttpResponse::Ok().json(json!({
         "message": "Account deleted",
     })))
 }
 
-pub async fn update_account(
+pub async fn confirm_account(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
-    query: web::Json<String>
+    query: web::Json<String>,
 ) -> Result<HttpResponse, actix_web::Error> {
-
     let mut transaction = pg
         .begin()
         .await
         .context("Failed to acquire a Postgres connection from the pool")
         .map_err(e500)?;
 
-    client.account_client.update_account(&mut transaction, query.0, "verified".to_string()).await.map_err(e500)?;
+    client
+        .account_client
+        .confirm_account(&mut transaction, query.0, "verified".to_string())
+        .await
+        .map_err(e500)?;
 
-    transaction.commit().await.context("Failed to commit the transaction").map_err(e500)?;
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit the transaction")
+        .map_err(e500)?;
 
     Ok(HttpResponse::Ok().finish())
 }

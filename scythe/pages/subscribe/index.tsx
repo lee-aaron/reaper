@@ -18,16 +18,14 @@ import {
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
+import Subscription from "../../src/components/Subscription";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
-interface Subscription {
-  prod_id: string;
-  discord_id: string;
-  discord_icon: string;
-  discord_name: string;
-  subscription_name: string;
-  subscription_description: string;
-  subscription_price: number;
+interface ServerInfo {
+  server_id: string;
+  icon: string;
+  name: string;
+  description: string;
 }
 
 const Subscribe: NextPage = () => {
@@ -36,8 +34,8 @@ const Subscribe: NextPage = () => {
   const router = useRouter();
   const [form, setForm] = React.useState<any>();
   const [error, setError] = React.useState<boolean>();
-  const [subscriptions, setSubscriptions] = React.useState(
-    Array<Subscription>()
+  const [serverInfo, setServerInfo] = React.useState(
+    Array<ServerInfo>()
   );
 
   if (!isAuthenticated) {
@@ -56,7 +54,7 @@ const Subscribe: NextPage = () => {
       fetch(searchUrl.toString())
         .then((res) => res.json())
         .then((data) => {
-          setSubscriptions(data);
+          setServerInfo(data);
         })
         .catch((err) => console.error(err));
     }
@@ -92,7 +90,7 @@ const Subscribe: NextPage = () => {
     fetch(searchUrl.toString())
       .then((res) => res.json())
       .then((data) => {
-        setSubscriptions(data);
+        setServerInfo(data);
       })
       .catch((err) => console.error(err));
   };
@@ -155,17 +153,17 @@ const Subscribe: NextPage = () => {
             justifyContent: "center",
           }}
         >
-          {subscriptions.map((sub: Subscription) => (
-            <Grid key={sub.prod_id} item xs={4} sm={4} md={3}>
+          {serverInfo.map((sub: ServerInfo) => (
+            <Grid key={sub.server_id} item xs={4} sm={4} md={3}>
               <Tooltip
-                title="Click to be redirected to subscription page"
+                title="Click to be redirected to the list of subscriptions for this server"
                 arrow
               >
                 <Card
                   sx={{ maxWidth: 340, padding: "1rem", my: "1rem" }}
                   onClick={() => {
                     router.push({
-                      pathname: `/subscribe/${sub.discord_id}/${sub.prod_id}`
+                      pathname: `/subscribe/${sub.server_id}`
                     });
                   }}
                 >
@@ -176,11 +174,10 @@ const Subscribe: NextPage = () => {
                           height: "64px",
                           width: "64px",
                         }}
-                        src={`https://cdn.discordapp.com/icons/${sub.discord_id}/${sub.discord_icon}.png?size=64`}
+                        src={`https://cdn.discordapp.com/icons/${sub.server_id}/${sub.icon}.png?size=64`}
                       />
                     }
-                    title={sub.discord_name}
-                    subheader={sub.subscription_name}
+                    title={sub.name}
                   />
                   <CardContent>
                     <Typography
@@ -188,14 +185,7 @@ const Subscribe: NextPage = () => {
                       color="textSecondary"
                       component="p"
                     >
-                      {sub.subscription_description}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      component="p"
-                    >
-                      ${sub.subscription_price}
+                      {sub.description}
                     </Typography>
                   </CardContent>
                 </Card>

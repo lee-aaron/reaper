@@ -13,15 +13,17 @@ export default function Updater(): null {
 
   useEffect(() => {
     if (!isAuthenticated || !user.id) return;
-    dispatch(GetAccount({ discord_id: user.id }));
-  }, [dispatch, isAuthenticated, user.id]);
+    if (router.pathname.includes("/create")) {
+      dispatch(GetAccount({ discord_id: user.id }));
+    }
+  }, [dispatch, isAuthenticated, user.id, router.pathname]);
 
   useEffect(() => {
     if (!isAuthenticated || !user.id || !router.isReady) return;
 
     // dispatch get customer if on subscribe route
-    if (router.pathname.includes("/subscribe") && router.query.id) {
-      dispatch(GetCustomer({ discord_id: user.id, server_id: router.query.id as string }));
+    if (router.pathname.includes("/subscribe")) {
+      dispatch(GetCustomer({ discord_id: user.id }));
     }
 
   }, [dispatch, isAuthenticated, user, router.pathname, router.isReady]);

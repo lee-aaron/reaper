@@ -58,6 +58,7 @@ const Payment: React.FC<{}> = () => {
         discord_id: user.id,
         discord_name: guild[0].name,
         discord_icon: guild[0].icon,
+        discord_description: form.serverDescription
       }),
     })
       .then((res) => {
@@ -167,6 +168,16 @@ const Payment: React.FC<{}> = () => {
                   ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xl={1}>
+              <TextField
+                required
+                onChange={handleChange}
+                id="serverDescription"
+                label="Server Description"
+                fullWidth
+                variant="standard"
+              />
             </Grid>
             <Grid item xl={2}>
               <Box

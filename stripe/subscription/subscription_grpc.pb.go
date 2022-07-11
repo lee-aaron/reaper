@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SubscriptionHandlerClient interface {
 	CreateSubscription(ctx context.Context, in *CreateSubscriptionRequest, opts ...grpc.CallOption) (*CreateSubscriptionReply, error)
+	CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionReply, error)
 }
 
 type subscriptionHandlerClient struct {
@@ -42,11 +43,21 @@ func (c *subscriptionHandlerClient) CreateSubscription(ctx context.Context, in *
 	return out, nil
 }
 
+func (c *subscriptionHandlerClient) CancelSubscription(ctx context.Context, in *CancelSubscriptionRequest, opts ...grpc.CallOption) (*CancelSubscriptionReply, error) {
+	out := new(CancelSubscriptionReply)
+	err := c.cc.Invoke(ctx, "/payments_v1.SubscriptionHandler/CancelSubscription", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubscriptionHandlerServer is the server API for SubscriptionHandler service.
 // All implementations must embed UnimplementedSubscriptionHandlerServer
 // for forward compatibility
 type SubscriptionHandlerServer interface {
 	CreateSubscription(context.Context, *CreateSubscriptionRequest) (*CreateSubscriptionReply, error)
+	CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionReply, error)
 	mustEmbedUnimplementedSubscriptionHandlerServer()
 }
 
@@ -56,6 +67,9 @@ type UnimplementedSubscriptionHandlerServer struct {
 
 func (UnimplementedSubscriptionHandlerServer) CreateSubscription(context.Context, *CreateSubscriptionRequest) (*CreateSubscriptionReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSubscription not implemented")
+}
+func (UnimplementedSubscriptionHandlerServer) CancelSubscription(context.Context, *CancelSubscriptionRequest) (*CancelSubscriptionReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CancelSubscription not implemented")
 }
 func (UnimplementedSubscriptionHandlerServer) mustEmbedUnimplementedSubscriptionHandlerServer() {}
 
@@ -88,6 +102,24 @@ func _SubscriptionHandler_CreateSubscription_Handler(srv interface{}, ctx contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubscriptionHandler_CancelSubscription_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CancelSubscriptionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubscriptionHandlerServer).CancelSubscription(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/payments_v1.SubscriptionHandler/CancelSubscription",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubscriptionHandlerServer).CancelSubscription(ctx, req.(*CancelSubscriptionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubscriptionHandler_ServiceDesc is the grpc.ServiceDesc for SubscriptionHandler service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -98,6 +130,10 @@ var SubscriptionHandler_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSubscription",
 			Handler:    _SubscriptionHandler_CreateSubscription_Handler,
+		},
+		{
+			MethodName: "CancelSubscription",
+			Handler:    _SubscriptionHandler_CancelSubscription_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

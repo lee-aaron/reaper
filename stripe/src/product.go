@@ -44,7 +44,8 @@ func (s *ProductServer) CreateProduct(ctx context.Context, req *pb.CreateProduct
 	}
 
 	return &pb.CreateProductReply{
-		Id: p.ID,
+		ProdId:  p.ID,
+		PriceId: p.DefaultPrice.ID,
 	}, nil
 }
 

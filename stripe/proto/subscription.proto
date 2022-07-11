@@ -15,6 +15,16 @@ message CreateSubscriptionReply {
   string client_secret = 2;
 }
 
+message CancelSubscriptionRequest {
+  string subscription_id = 1;
+  string stripe_account = 2;
+}
+
+message CancelSubscriptionReply {
+  bool success = 1;
+}
+
 service SubscriptionHandler {
   rpc CreateSubscription(CreateSubscriptionRequest) returns (CreateSubscriptionReply);
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (CancelSubscriptionReply);
 }

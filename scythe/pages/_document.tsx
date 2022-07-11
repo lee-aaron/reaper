@@ -8,7 +8,7 @@ export default function Document() {
           name="description"
           content="A Tool to kickstart your private community"
         />
-        <link rel="icon" href="favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"

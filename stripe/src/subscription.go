@@ -5,7 +5,6 @@ import (
 
 	pb "github.com/lee-aaron/stripe-go/subscription"
 	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/product"
 	"github.com/stripe/stripe-go/v72/sub"
 	"google.golang.org/grpc"
 )
@@ -19,20 +18,11 @@ func (srv *SubscriptionServer) Register(s *grpc.Server, ss *SubscriptionServer) 
 }
 
 func (srv *SubscriptionServer) CreateSubscription(ctx context.Context, req *pb.CreateSubscriptionRequest) (*pb.CreateSubscriptionReply, error) {
-	prod := &stripe.ProductParams{}
-	prod.SetStripeAccount(req.StripeAccount)
-
-	// fetch price id from req since it is actually prod id
-	p, err := product.Get(req.PriceId, prod)
-	if err != nil {
-		return nil, err
-	}
-
 	params := &stripe.SubscriptionParams{
 		Customer: stripe.String(req.CustomerId),
 		Items: []*stripe.SubscriptionItemsParams{
 			{
-				Price: stripe.String(p.DefaultPrice.ID),
+				Price: stripe.String(req.PriceId),
 			},
 		},
 		PaymentBehavior:       stripe.String("default_incomplete"),
@@ -50,5 +40,22 @@ func (srv *SubscriptionServer) CreateSubscription(ctx context.Context, req *pb.C
 	return &pb.CreateSubscriptionReply{
 		SubscriptionId: s.ID,
 		ClientSecret:   s.LatestInvoice.PaymentIntent.ClientSecret,
+	}, nil
+}
+
+func (srv *SubscriptionServer) CancelSubscription(ctx context.Context, req *pb.CancelSubscriptionRequest) (*pb.CancelSubscriptionReply, error) {
+	params := &stripe.SubscriptionParams{
+		CancelAtPeriodEnd: stripe.Bool(true),
+	}
+
+	params.SetStripeAccount(req.StripeAccount)
+
+	s, err := sub.Get(req.SubscriptionId, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.CancelSubscriptionReply{
+		Success: s.Status == "canceled",
 	}, nil
 }

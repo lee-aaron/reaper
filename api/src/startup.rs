@@ -93,7 +93,7 @@ async fn run(
                                 .unwrap()
                                 .eq("0xdeadbeef0x")
                     }))
-                    .to(update_account),
+                    .to(confirm_account),
             )
             .service(
                 web::scope("/v1")
@@ -101,20 +101,20 @@ async fn run(
                     .route("/user", web::get().to(user))
                     .route("/logout", web::get().to(log_out))
                     .route("/get_guilds", web::get().to(get_guilds))
+                    .route("/get_user", web::get().to(get_user))
                     .route("/search_guilds", web::get().to(search_guilds))
                     .route("/create_product", web::post().to(create_product_flow))
                     .route("/search_product", web::get().to(search_product))
                     .route("/get_account", web::get().to(get_account))
-                    .route("/get_user", web::get().to(get_user))
                     .route("/create_account", web::post().to(create_account))
                     .route("/delete_account", web::delete().to(delete_account))
                     .route("/get_account_link", web::get().to(get_account_link))
-                    .route("/get_customer", web::get().to(get_customer_db))
+                    .route("/get_customer", web::get().to(get_customer))
                     .route("/create_customer", web::post().to(create_customer))
-                    .route("/delete_customer", web::delete().to(delete_customer))
+                    // .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/create_subscription", web::post().to(create_subscription))
                     .route("/search_subscription", web::get().to(search_subscriptions))
-                    .route("/create_portal", web::get().to(create_portal)),
+                    // .route("/create_portal", web::get().to(create_portal)),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

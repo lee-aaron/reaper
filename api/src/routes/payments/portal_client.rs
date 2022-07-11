@@ -43,7 +43,6 @@ pub struct PortalInfoReq {
     pub server_id: String,
 }
 
-// Client side calls
 pub async fn create_portal(
     query: web::Query<PortalInfoReq>,
     client: web::Data<Payment>,
@@ -52,14 +51,9 @@ pub async fn create_portal(
     let mut portal_client = client.portal_client.clone();
 
     // look up stripe account id with server id
-    let owner_id = client
-        .product_client
-        .get_owner_id_from_guilds(&pg, query.0.server_id.clone())
-        .await
-        .map_err(e500)?;
-    let (stripe_account_id, _) = client
-        .account_client
-        .get_account(&pg, owner_id)
+    let stripe_id = client
+        .customer_client
+        .get_owner_stripe_id(&pg, query.0.customer_id.clone())
         .await
         .map_err(e500)?;
 
@@ -68,7 +62,7 @@ pub async fn create_portal(
         .create_portal(CreatePortalRequest {
             customer_id: query.0.customer_id,
             return_url: query.0.return_url,
-            stripe_account: stripe_account_id,
+            stripe_account: stripe_id,
         })
         .await
         .map_err(e500)?;

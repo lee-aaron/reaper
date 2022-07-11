@@ -13,7 +13,8 @@ message CreateProductRequest {
 }
 
 message CreateProductReply {
-  string id = 1;
+  string prod_id = 1;
+  string price_id = 2;
 }
 
 message GetProductRequest {

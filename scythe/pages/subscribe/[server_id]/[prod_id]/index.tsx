@@ -18,7 +18,7 @@ const SubscribePage: React.FC<{}> = () => {
   return (
     <React.Fragment>
       <Container sx={{ mt: 1 }}>
-        {!cus.id ? <CustomerForm /> : <SubscriptionCard />}
+        {!cus.user_created ? <CustomerForm /> : <SubscriptionCard />}
       </Container>
     </React.Fragment>
   );

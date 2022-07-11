@@ -21,7 +21,7 @@ func (s *AccountServer) Register(srv *grpc.Server, as *AccountServer) {
 func (s *AccountServer) CreateAccount(ctx context.Context, req *pb.CreateAccountRequest) (*pb.CreateAccountReply, error) {
 
 	params := &stripe.AccountParams{
-		Type:  stripe.String("express"),
+		Type:  stripe.String(string(stripe.AccountTypeExpress)),
 		Email: stripe.String(req.Email),
 	}
 

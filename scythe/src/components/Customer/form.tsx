@@ -9,7 +9,6 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useRouter } from "next/router";
 import React from "react";
 import { useUser } from "../../state/discord/hooks";
 import { useAppDispatch } from "../../state/hooks";
@@ -18,7 +17,6 @@ import { CreateCustomer } from "../../state/payments/actions";
 const CustomerForm: React.FC<{}> = () => {
   const user = useUser();
   const theme = useTheme();
-  const router = useRouter();
   const [name, setName] = React.useState("");
   const dispatch = useAppDispatch();
 
@@ -30,7 +28,6 @@ const CustomerForm: React.FC<{}> = () => {
         name: name,
         email: user.email,
         discord_id: user.id,
-        server_id: router.query.id as string,
       })
     );
   };

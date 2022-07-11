@@ -7,8 +7,7 @@ export const CreateCustomer = createAsyncThunk(
       name,
       email,
       discord_id,
-      server_id,
-    }: { name: string; email: string; discord_id: string; server_id: string },
+    }: { name: string; email: string; discord_id: string },
     thunkAPI
   ) => {
     try {
@@ -18,12 +17,9 @@ export const CreateCustomer = createAsyncThunk(
       );
 
       let query = {
-        customer_name: name,
-        customer_email: email,
-        metadata: {
-          discord_id: discord_id,
-        },
-        server_id: server_id,
+        name: name,
+        email: email,
+        discord_id: discord_id,
       };
 
       const res = await fetch(createCustomerUrl.toString(), {
@@ -45,10 +41,7 @@ export const CreateCustomer = createAsyncThunk(
 
 export const GetCustomer = createAsyncThunk(
   "payments/customer/get",
-  async (
-    { discord_id, server_id }: { discord_id: string; server_id: string },
-    thunkAPI
-  ) => {
+  async ({ discord_id }: { discord_id: string }, thunkAPI) => {
     const getCustomerUrl = new URL(
       "/api/v1/get_customer",
       window.location.origin
@@ -56,7 +49,6 @@ export const GetCustomer = createAsyncThunk(
 
     let query = {
       discord_id: discord_id,
-      server_id: server_id,
     };
 
     getCustomerUrl.search = new URLSearchParams(query).toString();
@@ -139,23 +131,23 @@ export const GetAccount = createAsyncThunk(
   }
 );
 
-export const SearchSubscription = createAsyncThunk(
-  "payments/subscriptions/search",
+export const SearchProduct = createAsyncThunk(
+  "payments/products/search",
   async (
     {
-      prod_id
-    } : {
+      prod_id,
+    }: {
       prod_id: string;
     },
     thunkAPI
   ) => {
     try {
-      const subscriptionUrl = new URL(
-        "/api/v1/search_subscription",
+      const productUrl = new URL(
+        "/api/v1/search_product",
         window.location.origin
       );
-      subscriptionUrl.searchParams.append("prod_id", prod_id);
-      const res = await fetch(subscriptionUrl.toString());
+      productUrl.searchParams.append("prod_id", prod_id);
+      const res = await fetch(productUrl.toString());
       if (res.status !== 200) {
         throw new Error(res.statusText);
       }
@@ -164,17 +156,21 @@ export const SearchSubscription = createAsyncThunk(
       return thunkAPI.rejectWithValue("");
     }
   }
-)
+);
 
 export const CreateSubscription = createAsyncThunk(
   "payments/subscriptions/create",
   async (
     {
       prod_id,
-      customer_id,
-    } : {
+      server_id,
+      discord_id,
+      price_id,
+    }: {
       prod_id: string;
-      customer_id: string;
+      server_id: string;
+      discord_id: string;
+      price_id: string;
     },
     thunkAPI
   ) => {
@@ -190,7 +186,9 @@ export const CreateSubscription = createAsyncThunk(
         },
         body: JSON.stringify({
           prod_id: prod_id,
-          customer_id: customer_id,
+          server_id: server_id,
+          discord_id: discord_id,
+          price_id: price_id,
         }),
       });
       if (res.status !== 200) {
@@ -201,4 +199,31 @@ export const CreateSubscription = createAsyncThunk(
       return thunkAPI.rejectWithValue("");
     }
   }
-)
+);
+
+export const SearchSubscription = createAsyncThunk(
+  "payments/subscriptions/search",
+  async (
+    {
+      discord_id,
+    }: {
+      discord_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const subscriptionUrl = new URL(
+        "/api/v1/search_subscription",
+        window.location.origin
+      );
+      subscriptionUrl.searchParams.append("discord_id", discord_id);
+      const res = await fetch(subscriptionUrl.toString());
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+);

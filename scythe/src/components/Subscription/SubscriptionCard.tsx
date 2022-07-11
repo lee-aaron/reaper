@@ -1,19 +1,20 @@
+import { LoadingButton } from "@mui/lab";
 import {
-  Avatar,
   Button,
   Card,
   CardActions,
   CardContent,
   CardHeader,
   Grid,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
+import { useUser } from "../../state/discord/hooks";
 import {
   CreateSubscription,
-  SearchSubscription
+  SearchProduct,
 } from "../../state/payments/actions";
 import { useCustomer, useSubscription } from "../../state/payments/hooks";
 import Loading from "../Loading";
@@ -23,19 +24,21 @@ const SubscriptionCard: React.FC<{}> = () => {
   const dispatch = useDispatch();
   const cus = useCustomer();
   const router = useRouter();
+  const user = useUser();
 
-  // fetch relevant product information
+  // fetch relevant product information from prod_id
   useEffect(() => {
-    // given prod_id
-    let prod_id = router.query.prod_id as string;
+    if (!router.query.prod_id) return;
 
-    dispatch(SearchSubscription({ prod_id }));
-  }, [router.query.prod_id]);
+    dispatch(SearchProduct({ prod_id: router.query.prod_id as string }));
+  }, [router.isReady]);
 
   // router push to checkout page when customer secret loads
   useEffect(() => {
     if (cus.secret[router.query.prod_id as string]) {
-      router.push(`/subscribe/${router.query.id}/${router.query.prod_id}/checkout`);
+      router.push(
+        `/subscribe/${router.query.server_id}/${router.query.prod_id}/checkout`
+      );
     }
   }, [cus.secret]);
 
@@ -44,7 +47,9 @@ const SubscriptionCard: React.FC<{}> = () => {
 
     let body = {
       prod_id: router.query.prod_id as string,
-      customer_id: cus.id,
+      price_id: sub.price_id,
+      server_id: router.query.server_id as string,
+      discord_id: user.id,
     };
 
     dispatch(CreateSubscription(body));
@@ -62,31 +67,15 @@ const SubscriptionCard: React.FC<{}> = () => {
           <Loading />
         ) : (
           <Card sx={{ px: 5 }}>
-            <CardHeader
-              avatar={
-                <Avatar
-                  sx={{
-                    height: "64px",
-                    width: "64px",
-                  }}
-                  src={`https://cdn.discordapp.com/icons/${sub.discord_id}/${sub.discord_icon}.png?size=64`}
-                />
-              }
-              title={sub.discord_name}
-              subheader={sub.sub_name}
-            />
+            <CardHeader title={sub.sub_name} />
             <CardContent>
-              <Typography variant="body1" color="textSecondary" component="p">
-                {sub.sub_description}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" component="p">
-                ${sub.sub_price}
-              </Typography>
+              <Typography variant="body1">{sub.sub_description}</Typography>
+              <Typography variant="body1">${sub.sub_price} / month</Typography>
             </CardContent>
             <CardActions>
-              <Button size="small" onClick={handleClick}>
+              <LoadingButton loading={cus.secret_loading === "idle"} size="small" onClick={handleClick}>
                 Subscribe
-              </Button>
+              </LoadingButton>
             </CardActions>
           </Card>
         )}

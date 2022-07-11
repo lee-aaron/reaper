@@ -14,7 +14,7 @@ import { useRouter } from "next/router";
 import React from "react";
 import { CreateAccount } from "../../src/components/Account/";
 import AccountLink from "../../src/components/Account/AccountLink";
-import Payment from "../../src/components/Payment";
+import Payment from "../../src/components/Product";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 import { useUser } from "../../src/state/discord/hooks";
 import { useOwner } from "../../src/state/payments/hooks";

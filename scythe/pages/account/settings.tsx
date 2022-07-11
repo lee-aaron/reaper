@@ -23,6 +23,8 @@ const Subscribe: NextPage = () => {
     router.push("/login");
   }
 
+  // load user's current subscriptions
+
   return (
     <React.Fragment>
       <Container

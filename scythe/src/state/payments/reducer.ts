@@ -4,20 +4,32 @@ import {
   GetAccount,
   CreateAccount,
   GetCustomer,
-  SearchSubscription,
+  SearchProduct,
   CreateSubscription,
+  SearchSubscription,
 } from "./actions";
 
 export interface Customer {
-  id: {
-    [key: string]: {
-      prod_id: string;
-      server_id: string;
-    };
-  };
   loading: string;
-  secret: { [key: string]: string };
-  prod_id: { [key: string]: string };
+  secret: { [key: string]: string }; // prod_id -> secret
+  prod_id: { [key: string]: string }; // prod_id -> owner's stripe account
+  secret_loading: string;
+  user_created: boolean;
+  subscriptions: Array<DashboardSubscription>;
+  loading_subscriptions: string;
+}
+
+export interface DashboardSubscription {
+  prod_id: string;
+  sub_id: string;
+  server_id: string;
+  cus_id: string;
+  name: string;
+  icon: string;
+  description: string;
+  sub_name: string;
+  sub_description: string;
+  sub_price: string;
 }
 
 export interface Owner {
@@ -27,12 +39,13 @@ export interface Owner {
 }
 
 export interface Subscription {
-  sub_name: string;
+  num_subscribed: number;
+  price_id: string;
+  prod_id: string;
+  server_id: string;
   sub_description: string;
+  sub_name: string;
   sub_price: number;
-  discord_id: string;
-  discord_name: string;
-  discord_icon: string;
   loading: string;
 }
 
@@ -42,10 +55,13 @@ export const initialState: {
   sub: Subscription;
 } = {
   cus: {
-    id: {},
     loading: "",
     secret: {},
     prod_id: {},
+    secret_loading: "",
+    user_created: false,
+    subscriptions: [],
+    loading_subscriptions: "",
   },
   owner: {
     id: "",
@@ -53,13 +69,14 @@ export const initialState: {
     loading: "",
   },
   sub: {
-    sub_name: "",
-    sub_description: "",
-    sub_price: 0,
-    discord_id: "",
-    discord_name: "",
-    discord_icon: "",
     loading: "",
+    num_subscribed: 0,
+    price_id: "",
+    prod_id: "",
+    server_id: "",
+    sub_description: "",
+    sub_name: "",
+    sub_price: 0,
   },
 };
 
@@ -86,8 +103,8 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetAccount.fulfilled, (state, action) => {
       if (state.owner.loading === "loading") {
         state.owner.loading = "idle";
-        state.owner.id = action.payload[0];
-        state.owner.status = action.payload[1];
+        state.owner.id = action.payload.stripe_id;
+        state.owner.status = action.payload.status;
       }
     })
     .addCase(GetAccount.rejected, (state, action) => {
@@ -98,13 +115,9 @@ export default createReducer(initialState, (builder) => {
     .addCase(CreateCustomer.pending, (state) => {
       state.cus.loading = "loading";
     })
-    .addCase(CreateCustomer.fulfilled, (state, action) => {
+    .addCase(CreateCustomer.fulfilled, (state) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
-        state.cus.id[action.payload.customer_id] = {
-          prod_id: action.payload.prod_id,
-          server_id: action.payload.server_id,
-        };
       }
     })
     .addCase(CreateCustomer.rejected, (state, action) => {
@@ -115,13 +128,10 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetCustomer.pending, (state) => {
       state.cus.loading = "loading";
     })
-    .addCase(GetCustomer.fulfilled, (state, action) => {
+    .addCase(GetCustomer.fulfilled, (state) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
-        state.cus.id[action.payload.customer_id] = {
-          prod_id: action.payload.prod_id,
-          server_id: action.payload.server_id,
-        };
+        state.cus.user_created = true;
       }
     })
     .addCase(GetCustomer.rejected, (state, action) => {
@@ -129,40 +139,50 @@ export default createReducer(initialState, (builder) => {
         state.cus.loading = "error";
       }
     })
-    .addCase(SearchSubscription.pending, (state) => {
+    .addCase(SearchProduct.pending, (state) => {
       state.sub.loading = "loading";
     })
-    .addCase(SearchSubscription.fulfilled, (state, action) => {
+    .addCase(SearchProduct.fulfilled, (state, action) => {
       if (state.sub.loading === "loading") {
         state.sub.loading = "idle";
-        state.sub.sub_name = action.payload.subscription_name;
-        state.sub.sub_description = action.payload.subscription_description;
-        state.sub.sub_price = action.payload.subscription_price;
-        state.sub.discord_id = action.payload.discord_id;
-        state.sub.discord_name = action.payload.discord_name;
-        state.sub.discord_icon = action.payload.discord_icon;
+        state.sub = {
+          ...state.sub,
+          ...action.payload,
+        };
       }
     })
-    .addCase(SearchSubscription.rejected, (state, action) => {
+    .addCase(SearchProduct.rejected, (state, action) => {
       if (!action.meta.aborted) {
         state.sub.loading = "error";
       }
     })
     .addCase(CreateSubscription.pending, (state) => {
-      state.sub.loading = "loading";
+      state.cus.secret_loading = "loading";
     })
     .addCase(CreateSubscription.fulfilled, (state, action) => {
-      if (state.sub.loading === "loading") {
-        state.sub.loading = "idle";
-        state.cus.secret[action.payload.product_id] =
-          action.payload.client_secret;
-        state.cus.prod_id[action.payload.product_id] =
-          action.payload.stripe_account;
+      if (state.cus.secret_loading === "loading") {
+        state.cus.secret_loading = "idle";
+        state.cus.secret[action.payload.prod_id] = action.payload.client_secret;
+        state.cus.prod_id[action.payload.prod_id] = action.payload.stripe_id;
       }
     })
     .addCase(CreateSubscription.rejected, (state, action) => {
       if (!action.meta.aborted) {
-        state.sub.loading = "error";
+        state.cus.secret_loading = "error";
       }
-    });
+    })
+    .addCase(SearchSubscription.pending, (state) => {
+      state.cus.loading_subscriptions = "loading";
+    })
+    .addCase(SearchSubscription.fulfilled, (state, action) => {
+      if (state.cus.loading_subscriptions === "loading") {
+        state.cus.loading_subscriptions = "idle";
+        state.cus.subscriptions = action.payload;
+      }
+    })
+    .addCase(SearchSubscription.rejected, (state, action) => {
+      if (!action.meta.aborted) {
+        state.cus.loading_subscriptions = "error";
+      }
+    })
 });
