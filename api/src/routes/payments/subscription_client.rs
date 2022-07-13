@@ -62,14 +62,15 @@ impl SubscriptionClient {
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            INSERT INTO cus_subscriptions (cus_id, discord_id, prod_id, server_id, sub_id)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO cus_subscriptions (cus_id, discord_id, prod_id, server_id, sub_id, status)
+            VALUES ($1, $2, $3, $4, $5, $6)
             "#,
             cus_sub.cus_id,
             cus_sub.discord_id,
             cus_sub.prod_id,
             cus_sub.server_id,
-            cus_sub.sub_id
+            cus_sub.sub_id,
+            "pending"
         )
         .execute(transaction)
         .await?;
@@ -85,7 +86,7 @@ impl SubscriptionClient {
             SubscriptionSearchResponse,
             r#"
             select c.*,g.*,s.sub_name,s.sub_description,p.sub_price from sub_info s 
-            inner join (select prod_id, sub_id, cus_id from cus_subscriptions where discord_id = $1) c on c.prod_id = s.prod_id 
+            inner join (select prod_id, sub_id, cus_id, status from cus_subscriptions where discord_id = $1) c on c.prod_id = s.prod_id 
             inner join (select * from guild_info) g on g.server_id = s.server_id 
             inner join (select * from sub_price) p on p.price_id = s.price_id
             "#,
@@ -274,6 +275,7 @@ pub struct SubscriptionSearchResponse {
     pub sub_name: String,
     pub sub_description: String,
     pub sub_price: i32,
+    pub status: String
 }
 
 // search for existing customer's subscriptions

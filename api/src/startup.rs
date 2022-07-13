@@ -7,7 +7,7 @@ use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
 use actix_web::dev::Server;
 use actix_web::web::Data;
-use actix_web::{guard, web, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use actix_web_lab::middleware::from_fn;
 use secrecy::{ExposeSecret, Secret};
 use shared::configuration::{DatabaseSettings, Settings};
@@ -81,20 +81,6 @@ async fn run(
             .wrap(TracingLogger::default())
             .route("/login", web::get().to(login))
             .route("/health_check", web::get().to(health_check))
-            .route(
-                "/v1/update_account",
-                web::patch()
-                    .guard(guard::fn_guard(|ctx| {
-                        ctx.head().headers.contains_key("X-Guarded")
-                            && ctx
-                                .head()
-                                .headers
-                                .get("X-Guarded")
-                                .unwrap()
-                                .eq("0xdeadbeef0x")
-                    }))
-                    .to(confirm_account),
-            )
             .service(
                 web::scope("/v1")
                     .wrap(from_fn(reject_anonymous_users))
@@ -113,8 +99,7 @@ async fn run(
                     .route("/create_customer", web::post().to(create_customer))
                     // .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/create_subscription", web::post().to(create_subscription))
-                    .route("/search_subscription", web::get().to(search_subscriptions))
-                    // .route("/create_portal", web::get().to(create_portal)),
+                    .route("/search_subscription", web::get().to(search_subscriptions)), // .route("/create_portal", web::get().to(create_portal)),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 
 	"github.com/lee-aaron/stripe-go/utils"
+	_ "github.com/lib/pq"
 	"github.com/stripe/stripe-go/v72"
 	"go.uber.org/zap"
 
@@ -41,11 +43,24 @@ func NewGRPCServer() *grpc.Server {
 }
 
 func NewWebhook() {
-	http.HandleFunc("/webhook", HandleWebhook)
+	sslmode := "prefer"
+	if config.Database.Require_ssl {
+		sslmode = "require"
+	}
+	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", config.Database.Username, config.Database.Password, config.Database.Database_name, sslmode)
+	db, err := sql.Open("postgres", dbinfo)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+
+	webhook := Webhook{db: db}
+
+	http.HandleFunc("/webhook", webhook.HandleWebhook)
 
 	log.Printf("Webhook listening on %s:%d", config.Payments.Host, config.Payments.WebhookPort)
 
-	err := http.ListenAndServe(fmt.Sprintf("%s:%d", config.Payments.Host, config.Payments.WebhookPort), nil)
+	err = http.ListenAndServe(fmt.Sprintf("%s:%d", config.Payments.Host, config.Payments.WebhookPort), nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

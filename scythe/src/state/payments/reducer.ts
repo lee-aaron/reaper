@@ -30,6 +30,7 @@ export interface DashboardSubscription {
   sub_name: string;
   sub_description: string;
   sub_price: string;
+  status: string;
 }
 
 export interface Owner {

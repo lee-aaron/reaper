@@ -8,10 +8,11 @@ import {
   Container,
   Grid,
   Paper,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
-import { padding } from "@mui/system";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
@@ -63,18 +64,27 @@ const Dashboard: NextPage = () => {
             Dashboard
           </Typography>
         </Paper>
-        {
-          cus.subscriptions.length > 0 ? (
-            <Paper sx={{
+        {cus.subscriptions.length > 0 ? (
+          <Paper
+            sx={{
               my: 2,
               padding: theme.spacing(3, 2),
-            }}>
-              <Typography variant="h5" align="center">
-                Current Subscriptions
-              </Typography>
-            </Paper>
-          ) : null
-        }
+            }}
+          >
+            <Grid container>
+              <Grid item sx={{ flex: 1 }}>
+                <Typography variant="h5" align="center">
+                  Current Subscriptions
+                </Typography>
+              </Grid>
+              <Grid item>
+                <Tooltip title="Looking to cancel / view your subscriptions? Visit your account's settings page!">
+                  <InfoOutlinedIcon />
+                </Tooltip>
+              </Grid>
+            </Grid>
+          </Paper>
+        ) : null}
         <Grid
           container
           spacing={{ xs: 2, md: 3 }}
@@ -100,19 +110,15 @@ const Dashboard: NextPage = () => {
                   subheader={sub.description}
                 />
                 <CardContent>
-                <Typography variant="subtitle1">
-                    {sub.sub_name}
-                  </Typography>
-                  <Typography variant="body2">
-                    {sub.sub_description}
-                  </Typography>
+                  <Typography variant="subtitle1">{sub.sub_name}</Typography>
+                  <Typography variant="body2">{sub.sub_description}</Typography>
                   <Typography variant="body2">
                     ${sub.sub_price} / month
                   </Typography>
+                  <Typography variant="body2">
+                    {sub.status}
+                  </Typography>
                 </CardContent>
-                <CardActions>
-                  <Button onClick={() => {}}>Click to be redirected</Button>
-                </CardActions>
               </Card>
             </Grid>
           ))}

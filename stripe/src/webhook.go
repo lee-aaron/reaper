@@ -1,7 +1,8 @@
 package main
 
 import (
-	"bytes"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,11 +14,17 @@ import (
 	"github.com/stripe/stripe-go/v72/webhook"
 )
 
-func HandleWebhook(w http.ResponseWriter, r *http.Request) {
+type Webhook struct {
+	db *sql.DB
+}
+
+func (wh *Webhook) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
 	}
+	const MaxBodyBytes = int64(65536)
+	r.Body = http.MaxBytesReader(w, r.Body, MaxBodyBytes)
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -32,6 +39,8 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := context.Background()
+
 	switch event.Type {
 	case "account.updated":
 		// If account can receive payments then update the status in the accounts database
@@ -44,36 +53,36 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if account.PayoutsEnabled {
-			// send PATCH request to API to update the account status
-			payload, err := json.Marshal(account.ID)
+			// Update the account status in the database
+			tx, err := wh.db.BeginTx(ctx, nil)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error marshalling account.updated webhook: %v\n", err)
-				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
+			defer tx.Rollback()
 
-			client := &http.Client{}
-			url := fmt.Sprintf("http://%s:%d/v1/update_account", config.Application.Host, config.Application.Port)
-			req, err := http.NewRequest(http.MethodPatch, url, bytes.NewBuffer(payload))
+			res, err := tx.ExecContext(ctx, "UPDATE owners SET status = 'verified' WHERE stripe_id = $1", account.ID)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating request for account.updated webhook: %v\n", err)
-				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(os.Stderr, "Error updating account status in database: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-
-			req.Header.Set("Content-Type", "application/json")
-			// better security is to generate UUID v4 and store it in DB
-			req.Header.Set("X-Guarded", "0xdeadbeef0x")
+			rowsAffected, err := res.RowsAffected()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error creating request: %v\n", err)
-				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-
-			_, err = client.Do(req)
+			if rowsAffected != 1 {
+				fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			err = tx.Commit()
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error sending request: %v\n", err)
-				w.WriteHeader(http.StatusBadRequest)
+				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 		}
@@ -81,16 +90,95 @@ func HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		// Continue to provision the subscription as payments continue to be made.
 		// Store the status in your database and check when a user accesses your service.
 		// This approach helps you avoid hitting rate limits.
+
+		var invoice stripe.Invoice
+		err := json.Unmarshal(event.Data.Raw, &invoice)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error unmarshalling invoice.paid webhook: %+v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if invoice.Status == "paid" && invoice.Subscription != nil {
+			// Update the status in the cus_subscriptions database
+			tx, err := wh.db.BeginTx(ctx, nil)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			defer tx.Rollback()
+
+			res, err := tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'paid' WHERE sub_id = $1", invoice.Subscription.ID)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			rowsAffected, err := res.RowsAffected()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if rowsAffected != 1 {
+				fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			err = tx.Commit()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	case "invoice.payment_failed":
 		// The payment failed or the customer does not have a valid payment method.
 		// The subscription becomes past_due. Notify your customer and send them to the
 		// customer portal to update their payment information.
+		var invoice stripe.Invoice
+		err := json.Unmarshal(event.Data.Raw, &invoice)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error unmarshalling invoice.paid webhook: %+v\n", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if invoice.Subscription != nil {
+			// Update the status in the cus_subscriptions database
+			tx, err := wh.db.BeginTx(ctx, nil)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			defer tx.Rollback()
+
+			res, err := tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'pending' WHERE sub_id = $1", invoice.Subscription.ID)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			rowsAffected, err := res.RowsAffected()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			if rowsAffected != 1 {
+				fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			err = tx.Commit()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+		}
 	case "customer.subscription.deleted":
 		// The subscription has been cancelled.
-	case "customer.subscription.updated":
-		// The subscription has been updated.
-		// Check status field to determine if the subscription is active or past_due.
-		// Provision the subscription
 	default:
 		// unhandled event type
 		fmt.Fprintf(os.Stderr, "Unhandled event type: %s\n", event.Type)

@@ -44,6 +44,7 @@ CREATE TABLE "cus_subscriptions" (
   "discord_id" TEXT NOT NULL,
   "prod_id" TEXT NOT NULL,
   "server_id" TEXT NOT NULL,
+  "status" TEXT NOT NULL,
   "sub_id" TEXT PRIMARY KEY
 );
 
