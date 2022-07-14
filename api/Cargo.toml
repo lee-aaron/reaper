@@ -12,7 +12,6 @@ path = 'src/lib.rs'
 
 [dependencies]
 async-trait = "0.1.53"
-env_logger = '0.9.0'
 chrono = '0.4.15'
 log = '0.4'
 prost = '0.10'
@@ -32,7 +31,7 @@ actix-web-lab = '0.15'
 reqwest = '0.11.10'
 base64 = '0.13.0'
 shared = { path = "../shared" }
-stripe-server = { path = "../stripe" }
+stripe-server = { path = "../stripe-go" }
 tonic = "0.7.2"
 
 [dependencies.tokio]

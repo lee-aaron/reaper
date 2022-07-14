@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package payments_v1;
+
+option go_package = "github.com/lee-aaron/stripe-go/grpc";
+
+message CreateProductRequest {
+  string name = 1;
+  string description = 2;
+  string stripe_account = 3;
+  map <string, string> metadata = 4;
+  int64 amount = 5;
+}
+
+message CreateProductReply {
+  string prod_id = 1;
+  string price_id = 2;
+}
+
+message GetProductRequest {
+  string id = 1;
+  string stripe_account = 2;
+}
+
+message GetProductReply {
+  string name = 1;
+  string description = 2;
+}
+
+message DeleteProductRequest {
+  string id = 1;
+  string stripe_account = 2;
+}
+
+message DeleteProductReply {
+  bool deleted = 1;
+}
+
+message UpdateProductRequest {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string stripe_account = 4;
+}
+
+message UpdateProductReply {
+  bool updated = 1;
+}
+
+message Product {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  map <string, string> metadata = 4;
+  int64 amount = 5;
+}
+
+message SearchProductRequest {
+  string query = 1;
+  string stripe_account = 2;
+  optional int64 limit = 3;
+  optional string page = 4;
+}
+
+message SearchProductReply {
+  repeated Product products = 1;
+}
+
+service ProductHandler {
+  rpc CreateProduct(CreateProductRequest) returns (CreateProductReply);
+  rpc GetProduct(GetProductRequest) returns (GetProductReply);
+  rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductReply);
+  rpc UpdateProduct(UpdateProductRequest) returns (UpdateProductReply);
+  rpc SearchProduct(SearchProductRequest) returns (SearchProductReply);
+}

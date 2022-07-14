@@ -64,6 +64,7 @@ pub struct DiscordSettings {
     pub redirect_uri: String,
     pub frontend_uri: String,
     pub bot_uri: String,
+    pub bot_token: String,
 }
 
 #[derive(serde::Deserialize, Clone)]

@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package payments_v1;
+
+option go_package = "github.com/lee-aaron/stripe-go/grpc";
+
+message CreatePriceRequest {
+  string currency = 1;
+  string product = 2;
+  int64 amount = 3;
+  string stripe_account = 4;
+  map <string, string> metadata = 5;
+}
+
+message CreatePriceReply {
+  string price_id = 1;
+}
+
+message GetPriceRequest {
+  string price_id = 1;
+}
+
+message GetPriceReply {
+  string price_id = 1;
+  string currency = 2;
+  string product = 3;
+  int64 amount = 4;
+}
+
+service PriceHandler {
+  rpc CreatePrice(CreatePriceRequest) returns (CreatePriceReply);
+  rpc GetPrice(GetPriceRequest) returns (GetPriceReply);
+}

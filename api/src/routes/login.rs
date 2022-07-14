@@ -39,7 +39,7 @@ pub async fn login(
 
     if form.code.is_none() {
         let discord_uri = format!(
-            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=identify%20email%20guilds",
+            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=guilds.join%20identify%20email%20guilds",
             configuration.discord.client_id,
             configuration.discord.redirect_uri
         );

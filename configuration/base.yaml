@@ -11,6 +11,7 @@ database:
   require_ssl: false
 discord:
   bot_uri: "https://discord.com/oauth2/authorize?client_id=966453809335382106&scope=bot&permissions=3"
+  bot_token: "OTY2NDUzODA5MzM1MzgyMTA2.GX_UYB.ugjXorGUho04BqB0QLG0dnmGy8nMMVSPQP8NXE"
 redis_uri: "redis://127.0.0.1:6379"
 payments:
   host: "127.0.0.1"
