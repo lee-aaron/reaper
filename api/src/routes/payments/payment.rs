@@ -7,7 +7,7 @@ use sqlx::PgPool;
 use stripe_server::payments_v1::CreateProductRequest;
 
 use crate::{
-    routes::{insert_guild_info, insert_guilds, GuildInfo},
+    routes::{insert_bot_status, insert_guild_info, insert_guilds, GuildInfo},
     utils::e500,
 };
 
@@ -154,6 +154,11 @@ pub async fn create_product_flow(
     )
     .await
     .map_err(e500)?;
+
+    // insert bot status
+    insert_bot_status(&mut transaction, query.0.target_server.clone())
+        .await
+        .map_err(e500)?;
 
     // insert sub_price into db
     client

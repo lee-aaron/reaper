@@ -50,12 +50,12 @@ func (srv *SubscriptionServer) CancelSubscription(ctx context.Context, req *pb.C
 
 	params.SetStripeAccount(req.StripeAccount)
 
-	s, err := sub.Get(req.SubscriptionId, params)
+	s, err := sub.Update(req.SubscriptionId, params)
 	if err != nil {
 		return nil, err
 	}
 
 	return &pb.CancelSubscriptionReply{
-		Success: s.Status == "canceled",
+		Success: s.CancelAtPeriodEnd,
 	}, nil
 }

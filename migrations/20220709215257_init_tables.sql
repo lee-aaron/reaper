@@ -29,7 +29,8 @@ CREATE TABLE "customers" (
 
 CREATE TABLE "guilds" (
   "discord_id" TEXT NOT NULL,
-  "server_id" TEXT NOT NULL
+  "server_id" TEXT NOT NULL,
+  UNIQUE (discord_id, server_id)
 );
 
 CREATE TABLE "guild_info" (
@@ -45,7 +46,23 @@ CREATE TABLE "cus_subscriptions" (
   "prod_id" TEXT NOT NULL,
   "server_id" TEXT NOT NULL,
   "status" TEXT NOT NULL,
-  "sub_id" TEXT PRIMARY KEY
+  "sub_id" TEXT UNIQUE PRIMARY KEY
+);
+
+CREATE TABLE "server_customers" (
+  "server_id" TEXT NOT NULL,
+  "cus_id" TEXT PRIMARY KEY,
+  "discord_id" TEXT NOT NULL
+);
+
+CREATE TABLE "tokens" (
+  "discord_id" TEXT NOT NULL,
+  "access_token" TEXT UNIQUE NOT NULL
+);
+
+CREATE TABLE "bot_status" (
+  "server_id" TEXT UNIQUE NOT NULL,
+  "bot_added" BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 ALTER TABLE "sub_info" ADD FOREIGN KEY ("price_id") REFERENCES "sub_price" ("price_id");
@@ -56,8 +73,16 @@ ALTER TABLE "guilds" ADD FOREIGN KEY ("discord_id") REFERENCES "owners" ("discor
 
 ALTER TABLE "guilds" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
 
-ALTER TABLE "cus_subscriptions" ADD FOREIGN KEY ("discord_id") REFERENCES "customers" ("discord_id");
-
 ALTER TABLE "cus_subscriptions" ADD FOREIGN KEY ("prod_id") REFERENCES "sub_info" ("prod_id");
 
 ALTER TABLE "cus_subscriptions" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
+
+ALTER TABLE "cus_subscriptions" ADD FOREIGN KEY ("discord_id") REFERENCES "customers" ("discord_id");
+
+ALTER TABLE "tokens" ADD FOREIGN KEY ("discord_id") REFERENCES "customers" ("discord_id");
+
+ALTER TABLE "server_customers" ADD FOREIGN KEY ("discord_id") REFERENCES "customers" ("discord_id");
+
+ALTER TABLE "server_customers" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
+
+ALTER TABLE "bot_status" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");

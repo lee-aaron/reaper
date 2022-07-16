@@ -1,19 +1,24 @@
 use std::collections::HashMap;
 
 use actix_web::{error::InternalError, web, HttpResponse};
+use anyhow::anyhow;
+use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
+use urlencoding::{decode, encode};
 
 use crate::{session_state::TypedSession, utils::see_other};
 use actix_web::http::header::LOCATION;
-use shared::configuration::get_configuration;
-
-// https://developers.google.com/identity/protocols/oauth2/web-server#example
+use shared::{
+    configuration::get_configuration,
+    utils::{compute_timestamp_hash, error_chain_fmt},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormData {
     code: Option<String>,
     error: Option<String>,
     error_description: Option<String>,
+    state: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,12 +42,22 @@ pub async fn login(
         return Err(login_redirect(e));
     }
 
+    session.renew();
+
     if form.code.is_none() {
+        let timestamp = compute_timestamp_hash().expect("Failed to compute timestamp hash");
+
         let discord_uri = format!(
-            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=guilds.join%20identify%20email%20guilds",
+            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=guilds.join%20identify%20email%20guilds&state={}",
             configuration.discord.client_id,
-            configuration.discord.redirect_uri
+            configuration.discord.redirect_uri,
+            encode(timestamp.expose_secret())
         );
+
+        session
+            .insert_time_hash(timestamp.expose_secret().to_string())
+            .expect("Failed to insert time hash");
+
         Ok(see_other(&discord_uri))
     } else {
         let code = form.0.code.unwrap();
@@ -52,6 +67,28 @@ pub async fn login(
         map.insert("grant_type", configuration.discord.grant_type);
         map.insert("code", code.clone());
         map.insert("redirect_uri", configuration.discord.redirect_uri);
+
+        let state = form
+            .0
+            .state
+            .ok_or(login_redirect(LoginError::UnexpectedError(anyhow!(
+                "Missing state"
+            ))))?;
+        let state = decode(&state).expect("UTF-8").to_string();
+        let time_hash = session
+            .get_time_hash()
+            .expect("Failed to get time hash")
+            .ok_or(login_redirect(LoginError::UnexpectedError(anyhow!(
+                "Missing time hash"
+            ))))?;
+
+        if time_hash != state {
+            return Err(login_redirect(LoginError::UnexpectedError(anyhow!(
+                "Invalid state"
+            ))));
+        }
+
+        session.clear_time_hash();
 
         match reqwest::Client::new()
             .post("https://discord.com/api/v10/oauth2/token")
@@ -64,13 +101,11 @@ pub async fn login(
                     let discord_response =
                         serde_json::from_str::<DiscordResponse>(&response.text().await.unwrap())
                             .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
-                    session.renew();
                     session
                         .insert_discord_oauth(discord_response)
                         .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
                     Ok(see_other(
-                        format!("{}{}", &configuration.discord.frontend_uri, "/dashboard")
-                            .as_str(),
+                        format!("{}{}", &configuration.discord.frontend_uri, "/dashboard").as_str(),
                     ))
                 } else {
                     let e = LoginError::UnexpectedError(anyhow::anyhow!(
@@ -112,17 +147,4 @@ impl std::fmt::Debug for LoginError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         error_chain_fmt(self, f)
     }
-}
-
-pub fn error_chain_fmt(
-    e: &impl std::error::Error,
-    f: &mut std::fmt::Formatter<'_>,
-) -> std::fmt::Result {
-    writeln!(f, "{}\n", e)?;
-    let mut current = e.source();
-    while let Some(cause) = current {
-        writeln!(f, "Caused by:\n\t{}", cause)?;
-        current = cause.source();
-    }
-    Ok(())
 }

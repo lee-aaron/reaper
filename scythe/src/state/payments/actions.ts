@@ -143,54 +143,11 @@ export const SearchProduct = createAsyncThunk(
   ) => {
     try {
       const productUrl = new URL(
-        "/api/v1/search_product",
+        "/api/v1/search_one_product",
         window.location.origin
       );
       productUrl.searchParams.append("prod_id", prod_id);
       const res = await fetch(productUrl.toString());
-      if (res.status !== 200) {
-        throw new Error(res.statusText);
-      }
-      return await res.json();
-    } catch (err) {
-      return thunkAPI.rejectWithValue("");
-    }
-  }
-);
-
-export const CreateSubscription = createAsyncThunk(
-  "payments/subscriptions/create",
-  async (
-    {
-      prod_id,
-      server_id,
-      discord_id,
-      price_id,
-    }: {
-      prod_id: string;
-      server_id: string;
-      discord_id: string;
-      price_id: string;
-    },
-    thunkAPI
-  ) => {
-    try {
-      const subscriptionUrl = new URL(
-        "/api/v1/create_subscription",
-        window.location.origin
-      );
-      const res = await fetch(subscriptionUrl.toString(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          prod_id: prod_id,
-          server_id: server_id,
-          discord_id: discord_id,
-          price_id: price_id,
-        }),
-      });
       if (res.status !== 200) {
         throw new Error(res.statusText);
       }
@@ -227,3 +184,70 @@ export const SearchSubscription = createAsyncThunk(
     }
   }
 );
+
+export const SearchOwnerSubscription = createAsyncThunk(
+  "payments/subscriptions/searchOwner",
+  async (
+    {
+      discord_id,
+    }: {
+      discord_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const subscriptionUrl = new URL(
+        "/api/v1/search_owner_product",
+        window.location.origin
+      );
+      subscriptionUrl.searchParams.append("discord_id", discord_id);
+      const res = await fetch(subscriptionUrl.toString());
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+)
+
+export const CancelSubscription = createAsyncThunk(
+  "payments/subscriptions/cancel",
+  async (
+    {
+      discord_id,
+      prod_id,
+      server_id
+    } : {
+      discord_id: string;
+      prod_id: string;
+      server_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const subscriptionUrl = new URL(
+        "/api/v1/cancel_subscription",
+        window.location.origin
+      );
+      const res = await fetch(subscriptionUrl.toString(), {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          discord_id: discord_id,
+          prod_id: prod_id,
+          server_id: server_id,
+        }),
+      });
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+)

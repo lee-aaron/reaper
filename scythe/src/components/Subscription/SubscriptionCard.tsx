@@ -1,28 +1,26 @@
 import { LoadingButton } from "@mui/lab";
 import {
-  Button,
   Card,
   CardActions,
   CardContent,
   CardHeader,
   Grid,
-  Typography,
+  Typography
 } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import { useUser } from "../../state/discord/hooks";
-import {
-  CreateSubscription,
-  SearchProduct,
-} from "../../state/payments/actions";
-import { useCustomer, useSubscription } from "../../state/payments/hooks";
+import { useAppDispatch } from "../../state/hooks";
+import { SearchProduct } from "../../state/payments/actions";
+import { useSubscription } from "../../state/payments/hooks";
+import { CreateSubscription } from "../../state/stripe/action";
+import { useStripe } from "../../state/stripe/hooks";
 import Loading from "../Loading";
 
 const SubscriptionCard: React.FC<{}> = () => {
   const sub = useSubscription();
-  const dispatch = useDispatch();
-  const cus = useCustomer();
+  const dispatch = useAppDispatch();
+  const stripe = useStripe();
   const router = useRouter();
   const user = useUser();
 
@@ -35,12 +33,12 @@ const SubscriptionCard: React.FC<{}> = () => {
 
   // router push to checkout page when customer secret loads
   useEffect(() => {
-    if (cus.secret[router.query.prod_id as string]) {
+    if (stripe.secret[router.query.prod_id as string]) {
       router.push(
         `/subscribe/${router.query.server_id}/${router.query.prod_id}/checkout`
       );
     }
-  }, [cus.secret]);
+  }, [stripe.secret]);
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -73,7 +71,11 @@ const SubscriptionCard: React.FC<{}> = () => {
               <Typography variant="body1">${sub.sub_price} / month</Typography>
             </CardContent>
             <CardActions>
-              <LoadingButton loading={cus.secret_loading === "idle"} size="small" onClick={handleClick}>
+              <LoadingButton
+                loading={stripe.loading === "idle"}
+                size="small"
+                onClick={handleClick}
+              >
                 Subscribe
               </LoadingButton>
             </CardActions>

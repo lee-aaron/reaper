@@ -112,7 +112,7 @@ pub async fn insert_guilds(
         r#"
         INSERT INTO guilds (discord_id, server_id)
         VALUES ($1, $2)
-        on conflict (server_id) do nothing
+        on conflict (discord_id, server_id) do nothing
         "#,
         discord_id,
         server_id
@@ -145,4 +145,22 @@ pub async fn get_owner_guilds(
     .fetch_all(pool)
     .await?;
     Ok(result.into_iter().map(|r| r.server_id).collect())
+}
+
+#[tracing::instrument(name = "Insert Default Bot Status", skip(transaction))]
+pub async fn insert_bot_status(
+    transaction: &mut Transaction<'_, Postgres>,
+    server_id: String,
+) -> Result<(), sqlx::Error> {
+    sqlx::query!(
+        r#"
+        INSERT INTO bot_status (server_id)
+        VALUES ($1)
+        on conflict do nothing
+        "#,
+        server_id
+    )
+    .execute(transaction)
+    .await?;
+    Ok(())
 }

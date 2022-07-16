@@ -91,6 +91,8 @@ async fn run(
                     .route("/search_guilds", web::get().to(search_guilds))
                     .route("/create_product", web::post().to(create_product_flow))
                     .route("/search_product", web::get().to(search_product))
+                    .route("/search_one_product", web::get().to(search_one_product))
+                    .route("/search_owner_product", web::get().to(search_owner_product))
                     .route("/get_account", web::get().to(get_account))
                     .route("/create_account", web::post().to(create_account))
                     .route("/delete_account", web::delete().to(delete_account))
@@ -99,7 +101,11 @@ async fn run(
                     .route("/create_customer", web::post().to(create_customer))
                     // .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/create_subscription", web::post().to(create_subscription))
-                    .route("/search_subscription", web::get().to(search_subscriptions)), // .route("/create_portal", web::get().to(create_portal)),
+                    .route("/search_subscription", web::get().to(search_subscriptions))
+                    .route(
+                        "/cancel_subscription",
+                        web::delete().to(cancel_subscriptions),
+                    ),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

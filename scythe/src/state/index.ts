@@ -16,15 +16,17 @@ import user from "./user/reducer";
 import authentication from "./authentication/reducer";
 import discord from "./discord/reducer";
 import payments from "./payments/reducer";
+import stripe from "./stripe/reducer";
 
-const PERSISTED_KEYS: string[] = ["user", "authentication", "payments"];
+const PERSISTED_KEYS: string[] = ["user", "authentication", "stripe"];
 
 const reducers = combineReducers({
   application,
   user,
   authentication,
   discord,
-  payments
+  payments,
+  stripe
 });
 
 const persistConfig = {

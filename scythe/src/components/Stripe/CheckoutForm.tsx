@@ -1,4 +1,5 @@
 import { LoadingButton } from "@mui/lab";
+import { Box, Typography } from "@mui/material";
 import {
   PaymentElement,
   useElements,
@@ -83,16 +84,30 @@ const CheckoutForm: React.FC<{}> = () => {
     <React.Fragment>
       <form id="payment-form" onSubmit={handleSubmit}>
         <PaymentElement id="payment-element" />
-        <LoadingButton
-          loading={isLoading}
-          disabled={isLoading || !stripe || !elements}
-          size="small"
-          type="submit"
-        >
-          Pay Now
-        </LoadingButton>
+        <Box display="flex" justifyContent="flex-end" alignItems="flex-end">
+          <LoadingButton
+            loading={isLoading}
+            disabled={isLoading || !stripe || !elements}
+            size="small"
+            type="submit"
+            variant="outlined"
+            sx={{ mt: 1, minWidth: 100 }}
+          >
+            Pay Now
+          </LoadingButton>
+        </Box>
         {/* Show any error or success messages */}
-        {message && <div id="payment-message">{message}</div>}
+        {message && (
+          <Box
+            id="payment-message"
+            display="flex"
+            justifyContent="center"
+            alignItems="center"
+            sx={{ mt: 2 }}
+          >
+            <Typography variant="body1">{message}</Typography>
+          </Box>
+        )}
       </form>
     </React.Fragment>
   );

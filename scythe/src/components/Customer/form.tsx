@@ -1,27 +1,36 @@
+import { LoadingButton } from "@mui/lab";
 import {
-  Box,
-  Button,
-  Container,
+  Box, Container,
   Grid,
   Paper,
   TextField,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
-import React from "react";
+import React, { useEffect } from "react";
 import { useUser } from "../../state/discord/hooks";
 import { useAppDispatch } from "../../state/hooks";
 import { CreateCustomer } from "../../state/payments/actions";
+import { useCustomer } from "../../state/payments/hooks";
 
 const CustomerForm: React.FC<{}> = () => {
   const user = useUser();
   const theme = useTheme();
   const [name, setName] = React.useState("");
   const dispatch = useAppDispatch();
+  const [loading, setLoading] = React.useState(false);
+  const cus = useCustomer();
+
+  useEffect(() => {
+    if (cus.user_created) {
+      setLoading(false);
+    }
+  }, [cus.user_created]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setLoading(true);
 
     dispatch(
       CreateCustomer({
@@ -90,7 +99,7 @@ const CustomerForm: React.FC<{}> = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Button type="submit">Create Account</Button>
+                  <LoadingButton loading={loading} type="submit">Create Account</LoadingButton>
                 </Box>
               </Grid>
             </Grid>

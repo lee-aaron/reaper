@@ -1,10 +1,6 @@
 import SearchIcon from "@mui/icons-material/Search";
 import {
-  Avatar,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
+  Avatar, Card, CardContent,
   CardHeader,
   Container,
   Grid,
@@ -13,12 +9,11 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import Subscription from "../../src/components/Subscription";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 
 interface ServerInfo {
@@ -26,6 +21,37 @@ interface ServerInfo {
   icon: string;
   name: string;
   description: string;
+}
+
+function stringToColor(string: string) {
+  let hash = 0;
+  let i;
+
+  /* eslint-disable no-bitwise */
+  for (i = 0; i < string.length; i += 1) {
+    hash = string.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  let color = '#';
+
+  for (i = 0; i < 3; i += 1) {
+    const value = (hash >> (i * 8)) & 0xff;
+    color += `00${value.toString(16)}`.slice(-2);
+  }
+  /* eslint-enable no-bitwise */
+
+  return color;
+}
+
+function stringAvatar(name: string) {
+  return {
+    sx: {
+      height: "64px",
+      width: "64px",
+      bgcolor: stringToColor(name),
+    },
+    children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
+  };
 }
 
 const Subscribe: NextPage = () => {
@@ -169,13 +195,14 @@ const Subscribe: NextPage = () => {
                 >
                   <CardHeader
                     avatar={
+                      sub.icon ? 
                       <Avatar
                         sx={{
                           height: "64px",
                           width: "64px",
                         }}
                         src={`https://cdn.discordapp.com/icons/${sub.server_id}/${sub.icon}.png?size=64`}
-                      />
+                      /> : <Avatar {...stringAvatar(sub.name)} />
                     }
                     title={sub.name}
                   />

@@ -214,6 +214,7 @@ pub struct DiscordInfo {
     pub discord_id: String,
 }
 
+#[tracing::instrument(name = "Getting Account", skip(client, pg, query))]
 pub async fn get_account(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
@@ -236,6 +237,7 @@ pub struct AccountLinkInfo {
     pub return_url: String,
 }
 
+#[tracing::instrument(name = "Get Account Link", skip(client, pg, query))]
 pub async fn get_account_link(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,

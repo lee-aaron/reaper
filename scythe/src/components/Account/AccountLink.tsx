@@ -29,7 +29,7 @@ const AccountLink = () => {
     }
 
     // interval to get owner status every 2 seconds for 3 times
-    let num = 3;
+    let num = 0;
     setIsLoading(true);
 
     const interval = setInterval(() => {
@@ -53,6 +53,10 @@ const AccountLink = () => {
 
   useEffect(() => {
     let shouldFetch = true;
+
+    if (!user.id) {
+      return;
+    }
 
     const fetchData = async () => {
       let accountUrl = new URL(
@@ -80,7 +84,7 @@ const AccountLink = () => {
     return () => {
       shouldFetch = false;
     };
-  }, []);
+  }, [user.id]);
 
   return (
     <React.Fragment>

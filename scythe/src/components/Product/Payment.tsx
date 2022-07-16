@@ -1,18 +1,25 @@
+import { LoadingButton } from "@mui/lab";
 import {
   Box,
   Button,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormHelperText,
   Grid,
   Input,
   InputAdornment,
   InputLabel,
+  Link,
   MenuItem,
   Select,
   SelectChangeEvent,
   TextField,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { GetGuilds } from "../../state/discord/actions";
@@ -27,12 +34,23 @@ const Payment: React.FC<{}> = () => {
   const dispatch = useAppDispatch();
   const guilds = useAdminGuilds();
   const user = useUser();
+  const [loading, setLoading] = React.useState(false);
+
+  const [open, setOpen] = React.useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   useEffect(() => {
     dispatch(GetGuilds());
   }, [dispatch]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (form.productAmount < 10) {
       setAmountError(true);
@@ -41,7 +59,8 @@ const Payment: React.FC<{}> = () => {
       setAmountError(false);
     }
 
-    const guild = guilds.filter(g => g.id === discord_id);
+    const guild = guilds.filter((g) => g.id === discord_id);
+    setLoading(true);
 
     fetch("/api/v1/create_product", {
       method: "POST",
@@ -57,14 +76,20 @@ const Payment: React.FC<{}> = () => {
         target_server: discord_id,
         discord_id: user.id,
         discord_name: guild[0].name,
-        discord_icon: guild[0].icon,
-        discord_description: form.serverDescription
+        discord_icon: guild[0].icon || "",
+        discord_description: form.serverDescription,
       }),
     })
       .then((res) => {
         console.log(res.status);
+        setLoading(false);
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+      });
+
+    handleClose();
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +103,7 @@ const Payment: React.FC<{}> = () => {
 
   return (
     <React.Fragment>
-      <form onSubmit={handleSubmit}>
+      <form>
         <Container maxWidth="md">
           <Grid
             container
@@ -186,12 +211,42 @@ const Payment: React.FC<{}> = () => {
                   justifyContent: "center",
                 }}
               >
-                <Button type="submit">Create Product</Button>
+                <LoadingButton loading={loading} onClick={handleClickOpen}>
+                  Create Product
+                </LoadingButton>
               </Box>
             </Grid>
           </Grid>
         </Container>
       </form>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Did you invite the bot to the server?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            If you did not invite the bot to the server, you will not be able to
+            have users join after subscribing.
+          </DialogContentText>
+          <DialogContentText>
+            Invite the bot by clicking on this{" "}
+            <Link href="https://discord.com/api/oauth2/authorize?client_id=966453809335382106&permissions=8&response_type=code&scope=bot">
+              link
+            </Link>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleSubmit} autoFocus>
+            Yes
+          </Button>
+        </DialogActions>
+      </Dialog>
     </React.Fragment>
   );
 };

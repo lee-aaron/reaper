@@ -1,19 +1,16 @@
 import { createReducer } from "@reduxjs/toolkit";
 import {
+  CreateAccount,
   CreateCustomer,
   GetAccount,
-  CreateAccount,
   GetCustomer,
+  SearchOwnerSubscription,
   SearchProduct,
-  CreateSubscription,
   SearchSubscription,
 } from "./actions";
 
 export interface Customer {
   loading: string;
-  secret: { [key: string]: string }; // prod_id -> secret
-  prod_id: { [key: string]: string }; // prod_id -> owner's stripe account
-  secret_loading: string;
   user_created: boolean;
   subscriptions: Array<DashboardSubscription>;
   loading_subscriptions: string;
@@ -30,13 +27,16 @@ export interface DashboardSubscription {
   sub_name: string;
   sub_description: string;
   sub_price: string;
-  status: string;
+  status?: string;
+  num_subscribed?: number;
 }
 
 export interface Owner {
   id: string;
   status: string;
   loading: string;
+  subscriptions: Array<DashboardSubscription>;
+  loading_subscriptions: string;
 }
 
 export interface Subscription {
@@ -57,9 +57,6 @@ export const initialState: {
 } = {
   cus: {
     loading: "",
-    secret: {},
-    prod_id: {},
-    secret_loading: "",
     user_created: false,
     subscriptions: [],
     loading_subscriptions: "",
@@ -68,6 +65,8 @@ export const initialState: {
     id: "",
     status: "",
     loading: "",
+    subscriptions: [],
+    loading_subscriptions: "",
   },
   sub: {
     loading: "",
@@ -119,6 +118,7 @@ export default createReducer(initialState, (builder) => {
     .addCase(CreateCustomer.fulfilled, (state) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
+        state.cus.user_created = true;
       }
     })
     .addCase(CreateCustomer.rejected, (state, action) => {
@@ -129,10 +129,12 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetCustomer.pending, (state) => {
       state.cus.loading = "loading";
     })
-    .addCase(GetCustomer.fulfilled, (state) => {
+    .addCase(GetCustomer.fulfilled, (state, action) => {
       if (state.cus.loading === "loading") {
         state.cus.loading = "idle";
-        state.cus.user_created = true;
+        if (action.payload) {
+          state.cus.user_created = true;
+        }
       }
     })
     .addCase(GetCustomer.rejected, (state, action) => {
@@ -157,21 +159,6 @@ export default createReducer(initialState, (builder) => {
         state.sub.loading = "error";
       }
     })
-    .addCase(CreateSubscription.pending, (state) => {
-      state.cus.secret_loading = "loading";
-    })
-    .addCase(CreateSubscription.fulfilled, (state, action) => {
-      if (state.cus.secret_loading === "loading") {
-        state.cus.secret_loading = "idle";
-        state.cus.secret[action.payload.prod_id] = action.payload.client_secret;
-        state.cus.prod_id[action.payload.prod_id] = action.payload.stripe_id;
-      }
-    })
-    .addCase(CreateSubscription.rejected, (state, action) => {
-      if (!action.meta.aborted) {
-        state.cus.secret_loading = "error";
-      }
-    })
     .addCase(SearchSubscription.pending, (state) => {
       state.cus.loading_subscriptions = "loading";
     })
@@ -186,4 +173,18 @@ export default createReducer(initialState, (builder) => {
         state.cus.loading_subscriptions = "error";
       }
     })
+    .addCase(SearchOwnerSubscription.pending, (state) => {
+      state.owner.loading_subscriptions = "loading";
+    })
+    .addCase(SearchOwnerSubscription.fulfilled, (state, action) => {
+      if (state.owner.loading_subscriptions === "loading") {
+        state.owner.loading_subscriptions = "idle";
+        state.owner.subscriptions = action.payload;
+      }
+    })
+    .addCase(SearchOwnerSubscription.rejected, (state, action) => {
+      if (!action.meta.aborted) {
+        state.owner.loading_subscriptions = "error";
+      }
+    });
 });

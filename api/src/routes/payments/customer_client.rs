@@ -1,12 +1,13 @@
-use actix_web::{web, HttpResponse, ResponseError};
 use actix_web::http::StatusCode;
+use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
+use shared::utils::error_chain_fmt;
 use sqlx::{PgPool, Postgres, Transaction};
 use stripe_server::payments_v1::customer_handler_client::CustomerHandlerClient;
 use stripe_server::payments_v1::*;
 use tonic::transport::{Channel, Uri};
 
-use crate::{utils::e500, routes::error_chain_fmt};
+use crate::utils::e500;
 
 use super::Payment;
 
@@ -118,6 +119,26 @@ impl CustomerClient {
         .fetch_one(pool)
         .await?;
         Ok(result.stripe_id)
+    }
+
+    #[tracing::instrument(name = "Insert Access Token into DB", skip(self, transaction))]
+    pub async fn insert_access_token(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        discord_id: String,
+        access_token: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO tokens (discord_id, access_token)
+            VALUES ($1, $2)
+            "#,
+            discord_id,
+            access_token
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
     }
 }
 

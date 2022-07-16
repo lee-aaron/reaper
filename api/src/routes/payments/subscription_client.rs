@@ -2,21 +2,21 @@ use std::collections::HashMap;
 
 use actix_web::http::StatusCode;
 use actix_web::{http::Uri, web, HttpResponse, ResponseError};
+use anyhow::anyhow;
 use anyhow::Context;
 use serde_json::json;
+use shared::utils::error_chain_fmt;
 use sqlx::{PgPool, Postgres, Transaction};
-use stripe_server::payments_v1::CustomerCreateRequest;
 use stripe_server::payments_v1::{
     subscription_handler_client::SubscriptionHandlerClient, CreateSubscriptionRequest,
 };
+use stripe_server::payments_v1::{CancelSubscriptionRequest, CustomerCreateRequest};
 use tonic::transport::Channel;
 
-use crate::{
-    routes::{error_chain_fmt, get_owner_id},
-    utils::e500,
-};
+use crate::session_state::TypedSession;
+use crate::{routes::get_owner_id, utils::e500};
 
-use super::{CustomerError, Payment};
+use super::{AccountError, CustomerError, Payment};
 
 #[derive(Clone)]
 pub struct SubscriptionClient {
@@ -97,6 +97,28 @@ impl SubscriptionClient {
         Ok(subscriptions)
     }
 
+    pub async fn set_cus_id(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        discord_id: String,
+        cus_id: String,
+        server_id: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO server_customers (discord_id, cus_id, server_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT DO NOTHING
+            "#,
+            discord_id,
+            cus_id,
+            server_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
+
     pub async fn get_cus_id(
         &self,
         pool: &PgPool,
@@ -105,7 +127,7 @@ impl SubscriptionClient {
     ) -> Result<Option<String>, sqlx::Error> {
         let r = sqlx::query!(
             r#"
-            select cus_id from cus_subscriptions where discord_id = $1 and server_id = $2
+            select cus_id from server_customers where discord_id = $1 and server_id = $2
             "#,
             discord_id,
             server_id
@@ -113,6 +135,42 @@ impl SubscriptionClient {
         .fetch_optional(pool)
         .await?;
         Ok(r.map(|row| row.cus_id))
+    }
+
+    pub async fn get_sub_id(
+        &self,
+        pool: &PgPool,
+        server_id: String,
+        discord_id: String,
+        prod_id: String,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let r = sqlx::query!(
+            r#"
+            select sub_id from cus_subscriptions where discord_id = $1 and server_id = $2 and prod_id = $3
+            "#,
+            discord_id,
+            server_id,
+            prod_id
+        )
+        .fetch_optional(pool)
+        .await?;
+        Ok(r.map(|row| row.sub_id))
+    }
+
+    pub async fn get_bot_added(
+        &self,
+        pool: &PgPool,
+        server_id: String,
+    ) -> Result<bool, sqlx::Error> {
+        let r = sqlx::query!(
+            r#"
+            select bot_added from bot_status where server_id = $1
+            "#,
+            server_id
+        )
+        .fetch_one(pool)
+        .await?;
+        Ok(r.bot_added)
     }
 }
 
@@ -122,8 +180,12 @@ pub enum SubscriptionError {
     UnexpectedError(#[from] anyhow::Error),
     #[error("No Subscription Found")]
     NoSubscriptionFound,
+    #[error("Bot is Not Added To Server")]
+    BotNotFound,
     #[error("Customer Fetch Error")]
     CustomerFetchError(#[from] CustomerError),
+    #[error("Account Fetch Error")]
+    AccountFetchError(#[from] AccountError),
 }
 
 impl std::fmt::Debug for SubscriptionError {
@@ -136,8 +198,10 @@ impl ResponseError for SubscriptionError {
     fn status_code(&self) -> StatusCode {
         match self {
             SubscriptionError::NoSubscriptionFound => StatusCode::NOT_FOUND,
+            SubscriptionError::BotNotFound => StatusCode::NOT_FOUND,
             SubscriptionError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             SubscriptionError::CustomerFetchError(e) => CustomerError::status_code(e),
+            SubscriptionError::AccountFetchError(e) => AccountError::status_code(e),
         }
     }
 }
@@ -155,7 +219,9 @@ pub async fn create_subscription(
     client: web::Data<Payment>,
     req: web::Json<SubscriptionRequest>,
     pg: web::Data<PgPool>,
+    session: TypedSession,
 ) -> Result<HttpResponse, SubscriptionError> {
+
     // find owner's stripe id
     let owner_id = get_owner_id(&pg, req.0.server_id.clone())
         .await
@@ -202,9 +268,35 @@ pub async fn create_subscription(
                 .await
                 .context("Failed to create customer")?
                 .into_inner();
+
             cus_result.customer_id
         }
     };
+
+    
+    let mut transaction = pg.begin().await.context("Failed to start transaction")?;
+
+    // insert customer into db
+    client
+        .subscription_client
+        .set_cus_id(
+            &mut transaction,
+            req.0.discord_id.clone(),
+            cus_id.clone(),
+            req.0.server_id.clone(),
+        )
+        .await
+        .context("Failed to insert customer into db")?;
+
+    // check that the bot is in the server
+    let bot_added = client
+        .subscription_client
+        .get_bot_added(&pg, req.0.server_id.clone())
+        .await
+        .context("Failed to get bot added")?;
+    if !bot_added {
+        return Err(SubscriptionError::BotNotFound);
+    }
 
     // create subscription in stripe
     let mut sub_client = client.subscription_client.clone();
@@ -222,13 +314,29 @@ pub async fn create_subscription(
     // update database
     // increment num_subscribed
     // insert into cus_subscriptions
-    let mut transaction = pg.begin().await.context("Failed to start transaction")?;
-
     client
         .product_client
         .increment_product(&mut transaction, req.0.prod_id.clone())
         .await
         .context("Failed to increment product")?;
+
+    // add access token to db
+    let discord_res = session
+        .get_discord_oauth()
+        .context("Failed to get discord token")?
+        .ok_or(SubscriptionError::UnexpectedError(anyhow!(
+            "Failed to get discord token"
+        )))?;
+
+    client
+        .customer_client
+        .insert_access_token(
+            &mut transaction,
+            req.0.discord_id.clone(),
+            discord_res.access_token.clone(),
+        )
+        .await
+        .context("Failed to insert access token")?;
 
     client
         .subscription_client
@@ -257,7 +365,6 @@ pub async fn create_subscription(
     })))
 }
 
-
 #[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct SubscriptionSearch {
     pub discord_id: String,
@@ -275,7 +382,7 @@ pub struct SubscriptionSearchResponse {
     pub sub_name: String,
     pub sub_description: String,
     pub sub_price: i32,
-    pub status: String
+    pub status: String,
 }
 
 // search for existing customer's subscriptions
@@ -290,4 +397,64 @@ pub async fn search_subscriptions(
         .await
         .map_err(e500)?;
     Ok(HttpResponse::Ok().json(res))
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct SubscriptionCancelReq {
+    pub discord_id: String,
+    pub prod_id: String,
+    pub server_id: String,
+}
+
+// cancel customer's subscriptions
+pub async fn cancel_subscriptions(
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+    req: web::Json<SubscriptionCancelReq>,
+) -> Result<HttpResponse, SubscriptionError> {
+    // find owner's stripe id
+    let owner_id = get_owner_id(&pg, req.0.server_id.clone())
+        .await
+        .context("Failed to get owner id")?
+        .ok_or(SubscriptionError::AccountFetchError(
+            AccountError::AccountNotFound,
+        ))?;
+
+    let owner = client
+        .account_client
+        .get_account(&pg, owner_id)
+        .await
+        .context("Failed to get stripe id")?
+        .ok_or(SubscriptionError::AccountFetchError(
+            AccountError::AccountNotFound,
+        ))?;
+
+    // find subscription id
+    let sub_id = client
+        .subscription_client
+        .get_sub_id(
+            &pg,
+            req.0.server_id.clone(),
+            req.0.discord_id.clone(),
+            req.0.prod_id.clone(),
+        )
+        .await
+        .context("Failed to get subscription id")?
+        .ok_or(SubscriptionError::NoSubscriptionFound)?;
+
+    // cancel subscription
+    let mut sub_client = client.subscription_client.clone();
+    let res = sub_client
+        .client
+        .cancel_subscription(CancelSubscriptionRequest {
+            subscription_id: sub_id.clone(),
+            stripe_account: owner.stripe_id.clone(),
+        })
+        .await
+        .context("Failed to cancel subscription")?
+        .into_inner();
+
+    Ok(HttpResponse::Ok().json(json!({
+        "status": res.success
+    })))
 }

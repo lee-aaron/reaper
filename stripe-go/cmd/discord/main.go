@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/lee-aaron/stripe-go/internal/pkg/callbacks"
 	internalHTTP "github.com/lee-aaron/stripe-go/internal/pkg/http"
 	"github.com/lee-aaron/stripe-go/utils"
 	_ "github.com/lib/pq"
@@ -25,7 +26,7 @@ const (
 
 var config = utils.LoadYaml()
 
-func startSession(token string) (*discordgo.Session, error) {
+func startSession(token string, db *sql.DB) (*discordgo.Session, error) {
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
@@ -36,12 +37,27 @@ func startSession(token string) (*discordgo.Session, error) {
 	session.State.TrackEmojis = false
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)
 
+	setupCallbackHandler(
+		session,
+		&callbacks.Handler{
+			BotName:        "",
+			BotKeyword:     "",
+			Db:             db,
+			ContextTimeout: contextTimeout,
+		},
+	)
+
 	err = session.Open()
 	if err != nil {
 		return nil, err
 	}
 
 	return session, nil
+}
+
+func setupCallbackHandler(session *discordgo.Session, callbackConfig *callbacks.Handler) {
+	session.AddHandler(callbackConfig.GuildAdd)
+	session.AddHandler(callbackConfig.GuildLeave)
 }
 
 func closeComponent(component string, closer io.Closer) {
@@ -80,7 +96,7 @@ func main() {
 	}
 	defer db.Close()
 
-	session, err := startSession(config.Discord.Bot_token)
+	session, err := startSession(config.Discord.Bot_token, db)
 	if err != nil {
 		log.Fatal(err)
 	}

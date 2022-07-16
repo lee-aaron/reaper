@@ -16,17 +16,42 @@ import (
 )
 
 const (
-	WebHookEndpoint = "/webhook"
+	WebHookEndpoint  = "/webhook"
+	BotCheckEndpoint = "/botcheck"
 )
 
 func NewServer(db *sql.DB, session *discordgo.Session, port string) *http.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(WebHookEndpoint, webhookHandler(db, session))
+	mux.HandleFunc(BotCheckEndpoint, botCheckHandler(session))
 
 	return &http.Server{
 		Addr:    "0.0.0.0:" + port,
 		Handler: mux,
+	}
+}
+
+func botCheckHandler(session *discordgo.Session) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		serverId, ok := r.URL.Query()["server_id"]
+		if !ok || len(serverId) != 1 {
+			http.Error(w, "Incorrect server_id query parameter", http.StatusBadRequest)
+			return
+		}
+
+		_, err := session.State.Guild(serverId[0])
+		if err != nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
@@ -75,20 +100,9 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				}
 				defer tx.Rollback()
 
-				res, err := tx.ExecContext(ctx, "UPDATE owners SET status = 'verified' WHERE stripe_id = $1", account.ID)
+				_, err = tx.ExecContext(ctx, "UPDATE owners SET status = 'verified' WHERE stripe_id = $1", account.ID)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error updating account status in database: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				rowsAffected, err := res.RowsAffected()
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				if rowsAffected != 1 {
-					fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -121,33 +135,53 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				}
 				defer tx.Rollback()
 
-				res, err := tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'paid' WHERE sub_id = $1", invoice.Subscription.ID)
+				_, err = tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'paid' WHERE sub_id = $1", invoice.Subscription.ID)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				rowsAffected, err := res.RowsAffected()
+
+				// Provision the subscription requires user's access token
+				var serverId string
+				var userId string
+				if err = tx.QueryRowContext(ctx, "SELECT server_id, discord_id FROM cus_subscriptions WHERE sub_id = $1", invoice.Subscription.ID).Scan(&serverId, &userId); err != nil {
+					fmt.Fprintf(os.Stderr, "Error getting server_id, discord_id from database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					error_customer_status(ctx, db, invoice.Subscription.ID)
+					return
+				}
+
+				var accessToken string
+				if err = tx.QueryRowContext(ctx, "SELECT access_token from tokens WHERE discord_id = $1", userId).Scan(&accessToken); err != nil {
+					fmt.Fprintf(os.Stderr, "Error getting access token: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					error_customer_status(ctx, db, invoice.Subscription.ID)
+					return
+				}
+
+				err = session.GuildMemberAdd(accessToken, serverId, userId, "", []string{}, false, false)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
+					fmt.Fprintf(os.Stderr, "Error provisioning subscription: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					error_customer_status(ctx, db, invoice.Subscription.ID)
+					return
+				}
+
+				// Remove access token from database
+				_, err = tx.ExecContext(ctx, "DELETE FROM tokens WHERE discord_id = $1", userId)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error deleting access token: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				if rowsAffected != 1 {
-					fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
+
 				err = tx.Commit()
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-
-				// Provision the subscription requires user's access token
-
-				// Remove access token from database
 			}
 		case "invoice.payment_failed":
 			// The payment failed or the customer does not have a valid payment method.
@@ -170,20 +204,9 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				}
 				defer tx.Rollback()
 
-				res, err := tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'pending' WHERE sub_id = $1", invoice.Subscription.ID)
+				_, err = tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'pending' WHERE sub_id = $1", invoice.Subscription.ID)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				rowsAffected, err := res.RowsAffected()
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-				if rowsAffected != 1 {
-					fmt.Fprintf(os.Stderr, "Expected to update one row but got %d rows affected\n", rowsAffected)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
@@ -215,26 +238,23 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 
 			var serverId string
 			var userId string
-			if err = tx.QueryRowContext(ctx, "SELECT server_id, discord_id FROM cus_subscriptions WHERE sub_id = $1", subscription.ID).Scan(&serverId, &userId); err != nil {
+			var prodId string
+			if err = tx.QueryRowContext(ctx, "SELECT server_id, discord_id, prod_id FROM cus_subscriptions WHERE sub_id = $1", subscription.ID).Scan(&serverId, &userId, &prodId); err != nil {
 				fmt.Fprintf(os.Stderr, "Error getting server_id, discord_id from database: %v\n", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			res, err := tx.ExecContext(ctx, "DELETE FROM cus_subscriptions WHERE sub_id = $1", subscription.ID)
+			_, err = tx.ExecContext(ctx, "DELETE FROM cus_subscriptions WHERE sub_id = $1", subscription.ID)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error deleting subscription from database: %v\n", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			rowsAffected, err := res.RowsAffected()
+
+			_, err = tx.ExecContext(ctx, "UPDATE sub_info SET num_subscribed = num_subscribed - 1 WHERE prod_id = $1", prodId)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Error getting rows affected: %v\n", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			if rowsAffected != 1 {
-				fmt.Fprintf(os.Stderr, "Expected to delete one row but got %d rows affected\n", rowsAffected)
+				fmt.Fprintf(os.Stderr, "Error updating subscription count in database: %v\n", err)
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
@@ -254,11 +274,110 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				return
 			}
 
+		case "customer.subscription.updated":
+
+			var subscription stripe.Subscription
+			err := json.Unmarshal(event.Data.Raw, &subscription)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error unmarshalling customer.subscription.updated webhook: %+v\n", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// Remove pending subscription from the database
+			if subscription.Status == stripe.SubscriptionStatusIncompleteExpired {
+
+				tx, err := db.BeginTx(ctx, nil)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+				defer tx.Rollback()
+
+				_, err = tx.ExecContext(ctx, "DELETE FROM cus_subscriptions WHERE sub_id = $1", subscription.ID)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error deleting subscription from database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				err = tx.Commit()
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+
+		case "product.deleted":
+			// The product has been deleted.
+			var product stripe.Product
+			err := json.Unmarshal(event.Data.Raw, &product)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error unmarshalling product.deleted webhook: %+v\n", err)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+
+			// Remove the product from the products database
+			tx, err := db.BeginTx(ctx, nil)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			_, err = tx.ExecContext(ctx, "DELETE FROM sub_info WHERE prod_id = $1", product.ID)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error deleting product from database: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
+			// Remove price from the price database
+			if product.DefaultPrice != nil {
+				_, err = tx.ExecContext(ctx, "DELETE FROM sub_price WHERE price_id = $1", product.DefaultPrice.ID)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error deleting price from database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+
+			err = tx.Commit()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 		default:
 			// unhandled event type
 			fmt.Fprintf(os.Stderr, "Unhandled event type: %s\n", event.Type)
 		}
 
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func error_customer_status(ctx context.Context, db *sql.DB, id string) {
+	// sets the cus subscription status to error
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+		return
+	}
+
+	_, err = tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'error' WHERE cus_id = $1", id)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error updating cus_subscription status: %v\n", err)
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+		return
 	}
 }
