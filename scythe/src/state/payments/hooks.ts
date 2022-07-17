@@ -14,3 +14,8 @@ export function useSubscription() {
   const subscription = useAppSelector((state) => state.payments.sub);
   return subscription;
 }
+
+export function useRoles() {
+  const roles = useAppSelector((state) => state.payments.roles);
+  return roles;
+}

@@ -251,3 +251,30 @@ export const CancelSubscription = createAsyncThunk(
     }
   }
 )
+
+export const GetRole = createAsyncThunk(
+  "payments/roles/get",
+  async (
+    {
+      server_id
+    } : {
+      server_id: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const roleUrl = new URL(
+        "/api/v1/get_roles",
+        window.location.origin
+      );
+      roleUrl.searchParams.append("server_id", server_id);
+      const res = await fetch(roleUrl.toString());
+      if (res.status !== 200) {
+        throw new Error(res.statusText);
+      }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+)

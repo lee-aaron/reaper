@@ -18,6 +18,7 @@ import (
 const (
 	WebHookEndpoint  = "/webhook"
 	BotCheckEndpoint = "/botcheck"
+	RolesEndpoint    = "/roles"
 )
 
 func NewServer(db *sql.DB, session *discordgo.Session, port string) *http.Server {
@@ -25,6 +26,7 @@ func NewServer(db *sql.DB, session *discordgo.Session, port string) *http.Server
 
 	mux.HandleFunc(WebHookEndpoint, webhookHandler(db, session))
 	mux.HandleFunc(BotCheckEndpoint, botCheckHandler(session))
+	mux.HandleFunc(RolesEndpoint, roleHandler(session))
 
 	return &http.Server{
 		Addr:    "0.0.0.0:" + port,
@@ -51,6 +53,41 @@ func botCheckHandler(session *discordgo.Session) http.HandlerFunc {
 			return
 		}
 
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func filter(roles []*discordgo.Role) (r []*discordgo.Role) {
+	for _, role := range roles {
+		if !role.Managed {
+			r = append(r, role)
+		}
+	}
+	return
+}
+
+func roleHandler(session *discordgo.Session) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != "GET" {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		serverId, ok := r.URL.Query()["server_id"]
+		if !ok || len(serverId) != 1 {
+			http.Error(w, "Incorrect server_id query parameter", http.StatusBadRequest)
+			return
+		}
+
+		st, err := session.GuildRoles(serverId[0])
+		if err != nil {
+			http.Error(w, "Error getting roles", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+
+		json.NewEncoder(w).Encode(filter(st))
 		w.WriteHeader(http.StatusOK)
 	}
 }
@@ -142,6 +179,14 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 					return
 				}
 
+				// increment number of subscribed
+				_, err = tx.ExecContext(ctx, "UPDATE sub_info SET num_subscribed = num_subscribed + 1 WHERE prod_id = (select prod_id from cus_subscriptions where sub_id = $1)", invoice.Subscription.ID)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
 				// Provision the subscription requires user's access token
 				var serverId string
 				var userId string
@@ -160,7 +205,18 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 					return
 				}
 
-				err = session.GuildMemberAdd(accessToken, serverId, userId, "", []string{}, false, false)
+				var roleId sql.NullString
+				var roles []string
+				if err = tx.QueryRowContext(ctx, "SELECT role_id FROM cus_subscriptions WHERE discord_id = $1 and server_id = $2", userId, serverId).Scan(&roleId); err != nil {
+					fmt.Println("Error querying for role: " + err.Error())
+					return
+				}
+
+				if roleId.Valid {
+					roles = append(roles, roleId.String)
+				}
+
+				err = session.GuildMemberAdd(accessToken, serverId, userId, "", roles, false, false)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error provisioning subscription: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)

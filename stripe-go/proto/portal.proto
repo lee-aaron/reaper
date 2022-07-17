@@ -14,6 +14,15 @@ message CreatePortalReply {
   string portal_url = 1;
 }
 
+message CreateLoginLinkRequest {
+  string stripe_account = 1;
+}
+
+message CreateLoginLinkReply {
+  string login_link_url = 1;
+}
+
 service PortalHandler {
   rpc CreatePortal(CreatePortalRequest) returns (CreatePortalReply);
+  rpc CreateLoginLink(CreateLoginLinkRequest) returns (CreateLoginLinkReply);
 }

@@ -1,5 +1,5 @@
 import { createReducer } from "@reduxjs/toolkit";
-import { CreateSubscription } from "./action";
+import { CreateSubscription, ClearSecret } from "./action";
 
 export interface Stripe {
   loading: string;
@@ -29,5 +29,8 @@ export default createReducer(initialState, (builder) => {
       if (!action.meta.aborted) {
         state.loading = "error";
       }
+    })
+    .addCase(ClearSecret, (state, action) => {
+      state.secret[action.payload] = "";
     });
 });

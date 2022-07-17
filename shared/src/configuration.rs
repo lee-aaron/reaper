@@ -77,6 +77,8 @@ pub struct PaymentsSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
+    pub webhook_port: u16,
 }
 
 pub fn get_configuration() -> Result<Settings, config::ConfigError> {

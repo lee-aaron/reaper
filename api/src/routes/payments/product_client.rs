@@ -20,6 +20,7 @@ pub struct SubInfo {
     pub sub_description: String,
     pub server_id: String,
     pub num_subscribed: i32,
+    pub role_id: Option<String>,
 }
 
 impl ProductClient {
@@ -53,35 +54,17 @@ impl ProductClient {
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            INSERT INTO sub_info (prod_id, price_id, sub_name, sub_description, server_id, num_subscribed)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO sub_info (prod_id, price_id, sub_name, sub_description, server_id, num_subscribed, role_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
             sub_info.prod_id,
             sub_info.price_id,
             sub_info.sub_name,
             sub_info.sub_description,
             sub_info.server_id,
-            sub_info.num_subscribed
+            sub_info.num_subscribed,
+            sub_info.role_id
         ).execute(transaction).await?;
-        Ok(())
-    }
-
-    #[tracing::instrument(name = "Increment Sub Info in DB", skip(transaction, self))]
-    pub async fn increment_product(
-        &self,
-        transaction: &mut Transaction<'_, Postgres>,
-        prod_id: String,
-    ) -> Result<(), sqlx::Error> {
-        sqlx::query!(
-            r#"
-            UPDATE sub_info
-            SET num_subscribed = num_subscribed + 1
-            WHERE prod_id = $1
-            "#,
-            prod_id
-        )
-        .execute(transaction)
-        .await?;
         Ok(())
     }
 
@@ -95,7 +78,8 @@ impl ProductClient {
             SearchProduct,
             r#"
         SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s 
-        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id WHERE s.server_id = $1 
+        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id 
+        WHERE s.server_id = $1 
         "#,
             server_id
         )
@@ -114,7 +98,8 @@ impl ProductClient {
             SearchProduct,
             r#"
         SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s 
-        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id WHERE s.prod_id = $1 
+        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id
+        WHERE s.prod_id = $1 
         "#,
             prod_id
         )
@@ -132,9 +117,10 @@ impl ProductClient {
         let rows = sqlx::query_as!(
             SearchOwnerRes,
             r#"
-        SELECT s.prod_id,s.sub_name,s.sub_description,s.num_subscribed,p.sub_price,p.price_id,g.* FROM sub_info s 
+        SELECT s.prod_id,s.sub_name,s.sub_description,s.num_subscribed,p.sub_price,p.price_id,g.*,coalesce(r.name,'') as role_name, coalesce(r.role_id,'') as role_id FROM sub_info s 
         INNER JOIN (select * from sub_price) p on p.price_id = s.price_id
         INNER JOIN (select * from guild_info) g on s.server_id = g.server_id
+        LEFT JOIN (select * from role) r on r.server_id = g.server_id
         WHERE s.server_id in (select server_id from guilds where discord_id = $1)
         "#,
             discord_id
@@ -162,6 +148,8 @@ pub struct SearchOwnerRes {
     pub name: String,
     pub description: String,
     pub icon: String,
+    pub role_id: Option<String>,
+    pub role_name: Option<String>,
 }
 
 // owner's products from DB

@@ -58,6 +58,8 @@ func startSession(token string, db *sql.DB) (*discordgo.Session, error) {
 func setupCallbackHandler(session *discordgo.Session, callbackConfig *callbacks.Handler) {
 	session.AddHandler(callbackConfig.GuildAdd)
 	session.AddHandler(callbackConfig.GuildLeave)
+	session.AddHandler(callbackConfig.RoleDelete)
+	session.AddHandler(callbackConfig.Ready)
 }
 
 func closeComponent(component string, closer io.Closer) {

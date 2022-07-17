@@ -2,6 +2,7 @@ use std::net::TcpListener;
 
 use crate::authentication::reject_anonymous_users;
 use crate::routes::*;
+use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_session::storage::RedisSessionStore;
 use actix_session::SessionMiddleware;
 use actix_web::cookie::Key;
@@ -72,6 +73,7 @@ async fn run(
     let secret_key = Key::from(hmac_secret.expose_secret().as_bytes());
     let redis_store = RedisSessionStore::new(redis_uri.expose_secret()).await?;
     let payment_client = Payment::new();
+    let governor_conf = GovernorConfigBuilder::default().finish().unwrap();
     let server = HttpServer::new(move || {
         App::new()
             .wrap(SessionMiddleware::new(
@@ -79,6 +81,7 @@ async fn run(
                 secret_key.clone(),
             ))
             .wrap(TracingLogger::default())
+            .wrap(Governor::new(&governor_conf))
             .route("/login", web::get().to(login))
             .route("/health_check", web::get().to(health_check))
             .service(
@@ -88,6 +91,7 @@ async fn run(
                     .route("/logout", web::get().to(log_out))
                     .route("/get_guilds", web::get().to(get_guilds))
                     .route("/get_user", web::get().to(get_user))
+                    .route("/get_roles", web::get().to(get_role))
                     .route("/search_guilds", web::get().to(search_guilds))
                     .route("/create_product", web::post().to(create_product_flow))
                     .route("/search_product", web::get().to(search_product))
@@ -95,17 +99,17 @@ async fn run(
                     .route("/search_owner_product", web::get().to(search_owner_product))
                     .route("/get_account", web::get().to(get_account))
                     .route("/create_account", web::post().to(create_account))
-                    .route("/delete_account", web::delete().to(delete_account))
                     .route("/get_account_link", web::get().to(get_account_link))
                     .route("/get_customer", web::get().to(get_customer))
                     .route("/create_customer", web::post().to(create_customer))
-                    // .route("/delete_customer", web::delete().to(delete_customer))
                     .route("/create_subscription", web::post().to(create_subscription))
                     .route("/search_subscription", web::get().to(search_subscriptions))
                     .route(
                         "/cancel_subscription",
                         web::delete().to(cancel_subscriptions),
-                    ),
+                    )
+                    .route("/create_portal", web::get().to(create_portal))
+                    .route("/create_login_link", web::get().to(create_login_link))
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

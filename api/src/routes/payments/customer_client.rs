@@ -140,6 +140,23 @@ impl CustomerClient {
         .await?;
         Ok(())
     }
+
+    #[tracing::instrument(name = "Delete Access Token into DB", skip(self, transaction))]
+    pub async fn delete_access_token(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        discord_id: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM tokens WHERE discord_id = $1
+            "#,
+            discord_id
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
 }
 
 #[derive(thiserror::Error)]

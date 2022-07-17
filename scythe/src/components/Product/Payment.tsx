@@ -19,12 +19,17 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
+  Typography,
   useTheme,
 } from "@mui/material";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { GetGuilds } from "../../state/discord/actions";
 import { useAdminGuilds, useUser } from "../../state/discord/hooks";
 import { useAppDispatch } from "../../state/hooks";
+import { GetRole } from "../../state/payments/actions";
+import { useRoles } from "../../state/payments/hooks";
+import { DashboardSubscription } from "../../state/payments/reducer";
+import SubCard from "../Subscription/Card";
 
 const Payment: React.FC<{}> = () => {
   const theme = useTheme();
@@ -34,13 +39,12 @@ const Payment: React.FC<{}> = () => {
   const dispatch = useAppDispatch();
   const guilds = useAdminGuilds();
   const user = useUser();
+  const roles = useRoles();
   const [loading, setLoading] = React.useState(false);
+  const [sub, setSub] = React.useState<DashboardSubscription>();
+  const [roleId, setRole] = React.useState("");
 
-  const [open, setOpen] = React.useState(false);
-
-  const handleClickOpen = () => {
-    setOpen(true);
-  };
+  const [open, setOpen] = React.useState(true);
 
   const handleClose = () => {
     setOpen(false);
@@ -48,9 +52,36 @@ const Payment: React.FC<{}> = () => {
 
   useEffect(() => {
     dispatch(GetGuilds());
-  }, [dispatch]);
+  }, []);
 
-  const handleSubmit = async (event: React.MouseEvent<HTMLButtonElement>) => {
+  useEffect(() => {
+    if (!discord_id) return;
+    dispatch(GetRole({ server_id: discord_id }));
+  }, [discord_id]);
+
+  useEffect(() => {
+    if (!discord_id || !form) return;
+
+    const guild = guilds.filter((g) => g.id === discord_id);
+    const roleName = roles.roles.filter((r: any) => r.id === roleId).length > 0 ? roles.roles.filter((r: any) => r.id === roleId)[0].name : "";
+
+    setSub({
+      prod_id: "",
+      sub_id: "",
+      server_id: discord_id,
+      cus_id: "",
+      name: guild[0].name,
+      icon: guild[0].icon || "",
+      description: form.serverDescription,
+      sub_name: form.productName,
+      sub_price: form.productAmount,
+      sub_description: form.productDescription,
+      role_id: roleId,
+      role_name: roleName,
+    });
+  }, [form, discord_id, roleId]);
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (form.productAmount < 10) {
       setAmountError(true);
@@ -60,6 +91,7 @@ const Payment: React.FC<{}> = () => {
     }
 
     const guild = guilds.filter((g) => g.id === discord_id);
+    const roleName = roles.roles.filter((r: any) => r.id === roleId).length > 0 ? roles.roles.filter((r: any) => r.id === roleId)[0].name : "";
     setLoading(true);
 
     fetch("/api/v1/create_product", {
@@ -78,6 +110,8 @@ const Payment: React.FC<{}> = () => {
         discord_name: guild[0].name,
         discord_icon: guild[0].icon || "",
         discord_description: form.serverDescription,
+        role_id: roleId || undefined,
+        role_name: roleName || undefined,
       }),
     })
       .then((res) => {
@@ -88,8 +122,6 @@ const Payment: React.FC<{}> = () => {
         console.log(err);
         setLoading(false);
       });
-
-    handleClose();
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,9 +133,13 @@ const Payment: React.FC<{}> = () => {
     setDiscord(event.target.value as string);
   };
 
+  const handleRoleChange = (event: SelectChangeEvent) => {
+    setRole(event.target.value as string);
+  }
+
   return (
     <React.Fragment>
-      <form>
+      <form onSubmit={handleSubmit}>
         <Container maxWidth="md">
           <Grid
             container
@@ -204,6 +240,27 @@ const Payment: React.FC<{}> = () => {
                 variant="standard"
               />
             </Grid>
+            <Grid item xl={1}>
+              <FormControl fullWidth variant="standard">
+                <InputLabel id="roleId">Role</InputLabel>
+                <Select
+                  labelId="roleId"
+                  id="roleId"
+                  value={roleId}
+                  onChange={handleRoleChange}
+                  disabled={roles.roles.length === 0}
+                >
+                  <MenuItem value="">
+                    None
+                  </MenuItem>
+                  {roles.roles.map((role) => (
+                    <MenuItem key={role.id} value={role.id}>
+                      {role.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
             <Grid item xl={2}>
               <Box
                 sx={{
@@ -211,7 +268,7 @@ const Payment: React.FC<{}> = () => {
                   justifyContent: "center",
                 }}
               >
-                <LoadingButton loading={loading} onClick={handleClickOpen}>
+                <LoadingButton loading={loading} type="submit">
                   Create Product
                 </LoadingButton>
               </Box>
@@ -231,7 +288,8 @@ const Payment: React.FC<{}> = () => {
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
             If you did not invite the bot to the server, you will not be able to
-            have users join after subscribing.
+            have users join after subscribing or have users join with a specific
+            role.
           </DialogContentText>
           <DialogContentText>
             Invite the bot by clicking on this{" "}
@@ -242,11 +300,31 @@ const Payment: React.FC<{}> = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleClose}>Close</Button>
-          <Button onClick={handleSubmit} autoFocus>
+          <Button onClick={handleClose} autoFocus>
             Yes
           </Button>
         </DialogActions>
       </Dialog>
+      {sub ? (
+        <Container
+          sx={{
+            my: 3,
+          }}
+        >
+          <Grid
+            container
+            spacing={{ xs: 2, md: 3 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+            alignItems="center"
+            justifyContent="center"
+            sx={{
+              maxWidth: "xl",
+            }}
+          >
+            <SubCard sub={sub} />
+          </Grid>
+        </Container>
+      ) : null}
     </React.Fragment>
   );
 };

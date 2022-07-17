@@ -46,6 +46,7 @@ CREATE TABLE "cus_subscriptions" (
   "prod_id" TEXT NOT NULL,
   "server_id" TEXT NOT NULL,
   "status" TEXT NOT NULL,
+  "role_id" TEXT,
   "sub_id" TEXT UNIQUE PRIMARY KEY
 );
 
@@ -63,6 +64,12 @@ CREATE TABLE "tokens" (
 CREATE TABLE "bot_status" (
   "server_id" TEXT UNIQUE NOT NULL,
   "bot_added" BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE "role" (
+  "role_id" TEXT PRIMARY KEY,
+  "name" TEXT NOT NULL,
+  "server_id" TEXT NOT NULL
 );
 
 ALTER TABLE "sub_info" ADD FOREIGN KEY ("price_id") REFERENCES "sub_price" ("price_id");
@@ -86,3 +93,7 @@ ALTER TABLE "server_customers" ADD FOREIGN KEY ("discord_id") REFERENCES "custom
 ALTER TABLE "server_customers" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
 
 ALTER TABLE "bot_status" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
+
+ALTER TABLE "role" ADD FOREIGN KEY ("server_id") REFERENCES "guild_info" ("server_id");
+
+ALTER TABLE "cus_subscriptions" ADD FOREIGN KEY ("role_id") REFERENCES "role" ("role_id");

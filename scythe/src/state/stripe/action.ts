@@ -1,4 +1,4 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
+import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
 
 export const CreateSubscription = createAsyncThunk(
   "stripe/subscriptions/create",
@@ -42,3 +42,5 @@ export const CreateSubscription = createAsyncThunk(
     }
   }
 );
+
+export const ClearSecret = createAction<string>("stripe/secret/clear");

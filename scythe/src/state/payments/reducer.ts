@@ -4,6 +4,7 @@ import {
   CreateCustomer,
   GetAccount,
   GetCustomer,
+  GetRole,
   SearchOwnerSubscription,
   SearchProduct,
   SearchSubscription,
@@ -27,8 +28,18 @@ export interface DashboardSubscription {
   sub_name: string;
   sub_description: string;
   sub_price: string;
+  role_id: string;
+  role_name: string;
   status?: string;
   num_subscribed?: number;
+}
+
+export interface Roles {
+  loading: string;
+  roles: Array<{
+    id: string;
+    name: string;
+  }>;
 }
 
 export interface Owner {
@@ -54,6 +65,7 @@ export const initialState: {
   cus: Customer;
   owner: Owner;
   sub: Subscription;
+  roles: Roles;
 } = {
   cus: {
     loading: "",
@@ -77,6 +89,10 @@ export const initialState: {
     sub_description: "",
     sub_name: "",
     sub_price: 0,
+  },
+  roles: {
+    loading: "",
+    roles: [],
   },
 };
 
@@ -185,6 +201,21 @@ export default createReducer(initialState, (builder) => {
     .addCase(SearchOwnerSubscription.rejected, (state, action) => {
       if (!action.meta.aborted) {
         state.owner.loading_subscriptions = "error";
+      }
+    })
+    .addCase(GetRole.pending, (state) => {
+      state.roles.loading = "loading";
+    })
+    .addCase(GetRole.fulfilled, (state, action) => {
+      if (state.roles.loading === "loading") {
+        state.roles.loading = "idle";
+        state.roles.roles = action.payload;
+        state.roles.roles = state.roles.roles.filter(role => role.name !== "@everyone");
+      }
+    })
+    .addCase(GetRole.rejected, (state, action) => {
+      if (!action.meta.aborted) {
+        state.roles.loading = "error";
       }
     });
 });

@@ -16,7 +16,7 @@ func (handler *Handler) GuildAdd(session *discordgo.Session, g *discordgo.GuildC
 		return
 	}
 
-	_, err = tx.Exec(`UPDATE bot_status SET bot_added = true WHERE server_id = $1`, g.ID)
+	_, err = tx.ExecContext(ctx, `UPDATE bot_status SET bot_added = true WHERE server_id = $1`, g.ID)
 	if err != nil {
 		fmt.Println("Error updating bot_status: " + err.Error())
 		return
@@ -38,7 +38,7 @@ func (handler *Handler) GuildLeave(session *discordgo.Session, g *discordgo.Guil
 		return
 	}
 
-	_, err = tx.Exec(`UPDATE bot_status SET bot_added = false WHERE server_id = $1`, g.ID)
+	_, err = tx.ExecContext(ctx, `UPDATE bot_status SET bot_added = false WHERE server_id = $1`, g.ID)
 	if err != nil {
 		fmt.Println("Error updating bot_status: " + err.Error())
 		return

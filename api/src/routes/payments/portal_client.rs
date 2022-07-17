@@ -1,6 +1,6 @@
 use actix_web::{web, HttpResponse};
 use sqlx::PgPool;
-use stripe_server::payments_v1::{portal_handler_client::PortalHandlerClient, CreatePortalRequest};
+use stripe_server::payments_v1::{portal_handler_client::PortalHandlerClient, CreatePortalRequest, CreateLoginLinkRequest};
 use tonic::transport::{Channel, Uri};
 
 use crate::utils::{e500, see_other};
@@ -68,4 +68,34 @@ pub async fn create_portal(
         .map_err(e500)?;
 
     Ok(see_other(&url.into_inner().portal_url))
+}
+
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+pub struct LoginLinkReq {
+    pub discord_id: String,
+}
+
+pub async fn create_login_link(
+    query: web::Query<LoginLinkReq>,
+    client: web::Data<Payment>,
+    pg: web::Data<PgPool>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let mut portal_client = client.portal_client.clone();
+
+    let owner = client
+        .account_client
+        .get_account(&pg, query.0.discord_id.clone())
+        .await
+        .map_err(e500)?
+        .ok_or(e500("Could not find account"))?;
+
+    let url = portal_client
+        .client
+        .create_login_link(CreateLoginLinkRequest {
+            stripe_account: owner.stripe_id.clone(),
+        })
+        .await
+        .map_err(e500)?;
+
+    Ok(see_other(&url.into_inner().login_link_url))
 }

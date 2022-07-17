@@ -7,7 +7,7 @@ use sqlx::PgPool;
 use stripe_server::payments_v1::CreateProductRequest;
 
 use crate::{
-    routes::{insert_bot_status, insert_guild_info, insert_guilds, GuildInfo},
+    routes::{insert_bot_status, insert_guild_info, insert_guilds, insert_role, GuildInfo},
     utils::e500,
 };
 
@@ -67,6 +67,8 @@ pub struct ProductFlow {
     pub discord_name: String,
     pub discord_description: String,
     pub discord_icon: String,
+    pub role_id: Option<String>,
+    pub role_name: Option<String>,
 }
 
 #[tracing::instrument(name = "product_flow", skip(pg, client))]
@@ -77,12 +79,19 @@ pub async fn create_product_flow(
 ) -> Result<HttpResponse, actix_web::Error> {
     let mut product_client = client.product_client.clone();
 
-    // assert each discord server only has < 3 products
-    // store in postgres db discord server id -> num products
-
     // assert price is minimum 10 dollars
     if query.0.price < 10 {
         return Err(e500("Price must be at least $10"));
+    }
+
+    // assert role name is not none if role id is not none
+    if query.0.role_id.is_none() && query.0.role_name.is_some() {
+        return Err(e500("Role ID must be set if Role Name is set"));
+    }
+
+    // assert role id is not none if role name is not none
+    if query.0.role_id.is_some() && query.0.role_name.is_none() {
+        return Err(e500("Role Name must be set if Role ID is set"));
     }
 
     // fetch stripe account id from postgres db
@@ -146,6 +155,21 @@ pub async fn create_product_flow(
     .await
     .map_err(e500)?;
 
+    // if using a role, insert into db
+    if query.0.role_id.is_some() {
+        let role_name = query.0.role_name.ok_or(e500("Role name is not set"))?;
+        let role_id = query.0.role_id.as_deref().unwrap_or("").to_string();
+        insert_role(
+            &mut transaction,
+            role_id,
+            role_name,
+            query.0.target_server.clone(),
+        )
+        .await
+        .context("Failed to insert role")
+        .map_err(e500)?;
+    }
+
     // insert guilds
     insert_guilds(
         &mut transaction,
@@ -185,6 +209,7 @@ pub async fn create_product_flow(
                 sub_description: query.0.description.clone(),
                 server_id: query.0.target_server.clone(),
                 num_subscribed: 0,
+                role_id: query.0.role_id,
             },
         )
         .await

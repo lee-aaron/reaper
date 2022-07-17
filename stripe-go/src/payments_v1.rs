@@ -179,6 +179,16 @@ pub struct CreatePortalReply {
     #[prost(string, tag="1")]
     pub portal_url: ::prost::alloc::string::String,
 }
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateLoginLinkRequest {
+    #[prost(string, tag="1")]
+    pub stripe_account: ::prost::alloc::string::String,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CreateLoginLinkReply {
+    #[prost(string, tag="1")]
+    pub login_link_url: ::prost::alloc::string::String,
+}
 /// Generated client implementations.
 pub mod portal_handler_client {
     #![allow(unused_variables, dead_code, missing_docs, clippy::let_unit_value)]
@@ -259,6 +269,25 @@ pub mod portal_handler_client {
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/payments_v1.PortalHandler/CreatePortal",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
+        pub async fn create_login_link(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateLoginLinkRequest>,
+        ) -> Result<tonic::Response<super::CreateLoginLinkReply>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/payments_v1.PortalHandler/CreateLoginLink",
             );
             self.inner.unary(request.into_request(), path, codec).await
         }

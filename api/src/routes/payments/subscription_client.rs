@@ -30,6 +30,7 @@ pub struct SubscriptionObject {
     pub prod_id: String,
     pub server_id: String,
     pub sub_id: String,
+    pub role_id: Option<String>,
 }
 
 impl SubscriptionClient {
@@ -62,15 +63,16 @@ impl SubscriptionClient {
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
-            INSERT INTO cus_subscriptions (cus_id, discord_id, prod_id, server_id, sub_id, status)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO cus_subscriptions (cus_id, discord_id, prod_id, server_id, sub_id, status, role_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             "#,
             cus_sub.cus_id,
             cus_sub.discord_id,
             cus_sub.prod_id,
             cus_sub.server_id,
             cus_sub.sub_id,
-            "pending"
+            "pending",
+            cus_sub.role_id,
         )
         .execute(transaction)
         .await?;
@@ -85,10 +87,11 @@ impl SubscriptionClient {
         let subscriptions = sqlx::query_as!(
             SubscriptionSearchResponse,
             r#"
-            select c.*,g.*,s.sub_name,s.sub_description,p.sub_price from sub_info s 
+            select c.*,g.*,s.sub_name,s.sub_description,p.sub_price,coalesce(r.name,'') as role_name, coalesce(r.role_id,'') as role_id from sub_info s 
             inner join (select prod_id, sub_id, cus_id, status from cus_subscriptions where discord_id = $1) c on c.prod_id = s.prod_id 
             inner join (select * from guild_info) g on g.server_id = s.server_id 
             inner join (select * from sub_price) p on p.price_id = s.price_id
+            left join (select * from role) r on r.server_id = s.server_id
             "#,
             discord_id
         )
@@ -172,6 +175,44 @@ impl SubscriptionClient {
         .await?;
         Ok(r.bot_added)
     }
+
+    pub async fn get_role_id(
+        &self,
+        pool: &PgPool,
+        prod_id: String,
+    ) -> Result<Option<String>, sqlx::Error> {
+        let r = sqlx::query!(
+            r#"
+            select role_id from sub_info where prod_id = $1
+            "#,
+            prod_id
+        )
+        .fetch_one(pool)
+        .await?;
+        Ok(r.role_id)
+    }
+
+    pub async fn update_status(
+        &self,
+        transaction: &mut Transaction<'_, Postgres>,
+        discord_id: String,
+        server_id: String,
+        prod_id: String,
+        status: String,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE cus_subscriptions SET status = $4 WHERE discord_id = $1 and server_id = $2 and prod_id = $3
+            "#,
+            discord_id,
+            server_id,
+            prod_id,
+            status
+        )
+        .execute(transaction)
+        .await?;
+        Ok(())
+    }
 }
 
 #[derive(thiserror::Error)]
@@ -221,7 +262,6 @@ pub async fn create_subscription(
     pg: web::Data<PgPool>,
     session: TypedSession,
 ) -> Result<HttpResponse, SubscriptionError> {
-
     // find owner's stripe id
     let owner_id = get_owner_id(&pg, req.0.server_id.clone())
         .await
@@ -273,7 +313,6 @@ pub async fn create_subscription(
         }
     };
 
-    
     let mut transaction = pg.begin().await.context("Failed to start transaction")?;
 
     // insert customer into db
@@ -312,13 +351,13 @@ pub async fn create_subscription(
         .into_inner();
 
     // update database
-    // increment num_subscribed
     // insert into cus_subscriptions
-    client
-        .product_client
-        .increment_product(&mut transaction, req.0.prod_id.clone())
+    // get role_id if any
+    let role_id = client
+        .subscription_client
+        .get_role_id(&pg, req.0.prod_id.clone())
         .await
-        .context("Failed to increment product")?;
+        .context("Failed to get role id")?;
 
     // add access token to db
     let discord_res = session
@@ -348,6 +387,7 @@ pub async fn create_subscription(
                 prod_id: req.0.prod_id.clone(),
                 server_id: req.0.server_id.clone(),
                 sub_id: sub_result.subscription_id.clone(),
+                role_id,
             },
         )
         .await
@@ -383,6 +423,8 @@ pub struct SubscriptionSearchResponse {
     pub sub_description: String,
     pub sub_price: i32,
     pub status: String,
+    pub role_id: Option<String>,
+    pub role_name: Option<String>,
 }
 
 // search for existing customer's subscriptions
@@ -453,6 +495,32 @@ pub async fn cancel_subscriptions(
         .await
         .context("Failed to cancel subscription")?
         .into_inner();
+
+    // update status in db
+    let mut transaction = pg.begin().await.context("Failed to start transaction")?;
+
+    client
+        .subscription_client
+        .update_status(
+            &mut transaction,
+            req.0.discord_id.clone(),
+            req.0.server_id.clone(),
+            req.0.prod_id.clone(),
+            "canceled".to_string(),
+        )
+        .await
+        .context("Failed to update status")?;
+
+    client
+        .customer_client
+        .delete_access_token(&mut transaction, req.0.discord_id.clone())
+        .await
+        .context("Failed to delete access token")?;
+
+    transaction
+        .commit()
+        .await
+        .context("Failed to commit transaction")?;
 
     Ok(HttpResponse::Ok().json(json!({
         "status": res.success

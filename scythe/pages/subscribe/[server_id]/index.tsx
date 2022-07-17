@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Card,
   CardContent,
   CardHeader,
@@ -21,6 +20,7 @@ interface Products {
   sub_name: string;
   sub_description: string;
   server_id: string;
+  name: string;
 }
 
 const SubscribePage: React.FC<{}> = () => {
@@ -107,11 +107,18 @@ const SubscribePage: React.FC<{}> = () => {
                       {prod.sub_description}
                     </Typography>
                     <Typography
+                      variant="body1"
+                      color="textSecondary"
+                      component="p"
+                    >
+                      {prod.name}
+                    </Typography>
+                    <Typography
                       variant="body2"
                       color="textSecondary"
                       component="p"
                     >
-                      ${prod.sub_price}
+                      ${prod.sub_price} / month
                     </Typography>
                   </CardContent>
                 </Card>

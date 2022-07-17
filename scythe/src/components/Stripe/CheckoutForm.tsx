@@ -3,16 +3,31 @@ import { Box, Typography } from "@mui/material";
 import {
   PaymentElement,
   useElements,
-  useStripe,
+  useStripe
 } from "@stripe/react-stripe-js";
+import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+import { useAppDispatch } from "../../state/hooks";
+import { ClearSecret } from "../../state/stripe/action";
 
 const CheckoutForm: React.FC<{}> = () => {
   const stripe = useStripe();
   const elements = useElements();
+  const router = useRouter();
+  const dispatch = useAppDispatch();
 
   const [message, setMessage] = useState<any>();
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const onBeforeUnload = () => {
+      dispatch(ClearSecret(router.query.prod_id as string));
+    }
+    router.events.on("routeChangeStart", onBeforeUnload);
+    return () => {
+      router.events.off("routeChangeStart", onBeforeUnload);
+    }
+  }, [message]);
 
   useEffect(() => {
     if (!stripe) {

@@ -1,5 +1,6 @@
 import { LoadingButton } from "@mui/lab";
 import {
+  Box,
   Button,
   CardActions,
   Container,
@@ -10,11 +11,12 @@ import {
   DialogTitle,
   Grid,
   Paper,
+  Stack,
   Typography,
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
-import { useRouter } from "next/router";
+import router, { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import SubCard from "../../src/components/Subscription/Card";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
@@ -24,7 +26,7 @@ import {
   CancelSubscription,
   SearchSubscription,
 } from "../../src/state/payments/actions";
-import { useCustomer } from "../../src/state/payments/hooks";
+import { useCustomer, useOwner } from "../../src/state/payments/hooks";
 import { DashboardSubscription } from "../../src/state/payments/reducer";
 
 const Subscribe: NextPage = () => {
@@ -35,6 +37,7 @@ const Subscribe: NextPage = () => {
   const cus = useCustomer();
   const isAuthenticated = useIsAuthenticated();
   const [sub, setSub] = React.useState<DashboardSubscription>();
+  const owner = useOwner();
 
   if (!isAuthenticated) {
     router.push("/login");
@@ -76,6 +79,24 @@ const Subscribe: NextPage = () => {
     setOpen(false);
   };
 
+  const handleView = (sub: DashboardSubscription) => {
+    let query = {
+      server_id: sub.server_id,
+      customer_id: sub.cus_id,
+      return_url: window.location.href,
+    };
+
+    router.push(`/api/v1/create_portal?${new URLSearchParams(query)}`);
+  };
+
+  const handleViewAll = () => {
+    let query = {
+      discord_id: user.id
+    }
+
+    router.push(`/api/v1/create_login_link?${new URLSearchParams(query)}`);
+  }
+
   return (
     <React.Fragment>
       <Container
@@ -94,6 +115,23 @@ const Subscribe: NextPage = () => {
             Settings
           </Typography>
         </Paper>
+        {owner.id && (
+          <Grid
+            container
+            justifyContent="center"
+            alignItems="center"
+            flexDirection="column"
+            sx={{
+              my: 2,
+              p: 2,
+            }}
+          >
+            <Paper sx={{ p: 3 }} component={Stack} direction="column" justifyContent="center">
+              <Typography variant="h5">View your Customers and Track Income</Typography>
+              <Button sx={{ mt: 2 }} onClick={handleViewAll}>Click to be redirected</Button>
+            </Paper>
+          </Grid>
+        )}
         {cus.subscriptions.length > 0 ? (
           <Paper
             sx={{
@@ -127,7 +165,9 @@ const Subscribe: NextPage = () => {
                   <LoadingButton onClick={() => handleClickOpen(sub)}>
                     Cancel Subscription
                   </LoadingButton>
-                  <Button>View Invoice</Button>
+                  <Button onClick={() => handleView(sub)}>
+                    Manage Payments & View Invoices
+                  </Button>
                 </CardActions>
               }
             />

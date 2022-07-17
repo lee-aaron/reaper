@@ -155,62 +155,6 @@
     },
     "query": "\n            SELECT *\n            FROM sub_price\n            WHERE price_id = $1\n            "
   },
-  "24f0b0bc59b81fcdeedcb2acf655dd6b6441b2f2d6a522256248ed3ebc504ce9": {
-    "describe": {
-      "columns": [
-        {
-          "name": "prod_id",
-          "ordinal": 0,
-          "type_info": "Text"
-        },
-        {
-          "name": "sub_name",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "sub_description",
-          "ordinal": 2,
-          "type_info": "Text"
-        },
-        {
-          "name": "server_id",
-          "ordinal": 3,
-          "type_info": "Text"
-        },
-        {
-          "name": "num_subscribed",
-          "ordinal": 4,
-          "type_info": "Int4"
-        },
-        {
-          "name": "sub_price",
-          "ordinal": 5,
-          "type_info": "Int4"
-        },
-        {
-          "name": "price_id",
-          "ordinal": 6,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s \n        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id \n        WHERE s.server_id in (select server_id from guilds where discord_id = $1)\n        "
-  },
   "3276ef2f28b0025ed3fa4eb00a5d7e97969e3d495ec506a019c488cb6fdaa13f": {
     "describe": {
       "columns": [
@@ -249,17 +193,27 @@
     },
     "query": "\n        SELECT *\n        FROM guild_info\n        WHERE name ILIKE $1 || '%'\n    "
   },
-  "34600a4ff5fccc34ca1b3dccd29ba36b6e1808f975f3dd17df1f366509faadfc": {
+  "3e3fadaf4703e018e4b4bc217fec523aded7a069587d25ef6aaacc3b82bdeeef": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "sub_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
       "parameters": {
         "Left": [
+          "Text",
+          "Text",
           "Text"
         ]
       }
     },
-    "query": "\n            UPDATE sub_info\n            SET num_subscribed = num_subscribed - 1\n            WHERE prod_id = $1\n            "
+    "query": "\n            select sub_id from cus_subscriptions where discord_id = $1 and server_id = $2 and prod_id = $3\n            "
   },
   "3e9c6b81d0e10c0ce9b33008dea590859c406fec2a0b08da419ccbfe6955e9e9": {
     "describe": {
@@ -275,6 +229,20 @@
       }
     },
     "query": "\n        INSERT INTO guild_info (server_id, name, description, icon)\n        VALUES ($1, $2, $3, $4)\n        on conflict (server_id) do nothing\n        "
+  },
+  "447305f891a851af9df66eca670efc97353c7e64275bbce6d87054b108ce386f": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO server_customers (discord_id, cus_id, server_id)\n            VALUES ($1, $2, $3)\n            ON CONFLICT DO NOTHING\n            "
   },
   "4841c470cb8cd0a639d06ea66339f1de8397abaedefb6649e0fabb608c508362": {
     "describe": {
@@ -346,6 +314,80 @@
     },
     "query": "\n        SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s \n        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id WHERE s.prod_id = $1 \n        "
   },
+  "6219048b738da69c4858e62b5f4d3d52ce8b7475bed725ff56cd0c83356bf596": {
+    "describe": {
+      "columns": [
+        {
+          "name": "prod_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "sub_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "sub_description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "num_subscribed",
+          "ordinal": 3,
+          "type_info": "Int4"
+        },
+        {
+          "name": "sub_price",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "price_id",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "name",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "icon",
+          "ordinal": 8,
+          "type_info": "Text"
+        },
+        {
+          "name": "description",
+          "ordinal": 9,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT s.prod_id,s.sub_name,s.sub_description,s.num_subscribed,p.sub_price,p.price_id,g.* FROM sub_info s \n        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id\n        INNER JOIN (select * from guild_info) g on s.server_id = g.server_id\n        WHERE s.server_id in (select server_id from guilds where discord_id = $1)\n        "
+  },
   "631fdc840a605e1eff56c5430ee09b4fdba46fe7f0001569a69fde42593316e0": {
     "describe": {
       "columns": [
@@ -366,13 +408,25 @@
     },
     "query": "\n            SELECT stripe_id FROM owners WHERE discord_id = (SELECT discord_id FROM guilds where server_id = (SELECT server_id FROM cus_subscriptions where cus_id = $1))\n            "
   },
-  "6cdeb4134a2907df67389ae8f190189817e42ccb4d90af0344bd6acd163233dd": {
+  "6bb2cc54a9caeae3217bc21f263a03be1dd97f22daaa31df3619685a2df724e5": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO bot_status (server_id)\n        VALUES ($1)\n        on conflict do nothing\n        "
+  },
+  "785482f31ec6d3b4c0ad0acd271489fbda0c5995999af78348a9dfd5be23c7cf": {
     "describe": {
       "columns": [
         {
-          "name": "cus_id",
+          "name": "bot_added",
           "ordinal": 0,
-          "type_info": "Text"
+          "type_info": "Bool"
         }
       ],
       "nullable": [
@@ -380,12 +434,11 @@
       ],
       "parameters": {
         "Left": [
-          "Text",
           "Text"
         ]
       }
     },
-    "query": "\n            select cus_id from cus_subscriptions where discord_id = $1 and server_id = $2\n            "
+    "query": "\n            select bot_added from bot_status where server_id = $1\n            "
   },
   "82079768df22609afc465dadae86290b7c6ecfe0635388a3a2a3e8c6b8409e99": {
     "describe": {
@@ -400,18 +453,61 @@
     },
     "query": "\n            INSERT INTO sub_price (price_id, sub_price)\n            VALUES ($1, $2)\n            "
   },
-  "97eda9982f7d86b6a9f9dd0e9651a52e178a9e0fe826a40614e5534e0fc1c9b0": {
+  "99e22ee4a1beee1b76ffcdec31109100e2c205a944424127328c534b993010b2": {
     "describe": {
-      "columns": [],
-      "nullable": [],
+      "columns": [
+        {
+          "name": "prod_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "sub_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "sub_description",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "server_id",
+          "ordinal": 3,
+          "type_info": "Text"
+        },
+        {
+          "name": "num_subscribed",
+          "ordinal": 4,
+          "type_info": "Int4"
+        },
+        {
+          "name": "sub_price",
+          "ordinal": 5,
+          "type_info": "Int4"
+        },
+        {
+          "name": "price_id",
+          "ordinal": 6,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
       "parameters": {
         "Left": [
-          "Text",
           "Text"
         ]
       }
     },
-    "query": "\n        INSERT INTO guilds (discord_id, server_id)\n        VALUES ($1, $2)\n        on conflict (server_id) do nothing\n        "
+    "query": "\n        SELECT s.prod_id,s.sub_name,s.sub_description,s.server_id,s.num_subscribed,p.sub_price,p.price_id FROM sub_info s \n        INNER JOIN (select * from sub_price) p on p.price_id = s.price_id WHERE s.server_id = $1 \n        "
   },
   "a48b97147ded1b10aa7aba2fe99169c424ac4dc6169026836fb5543fa4d9bb2d": {
     "describe": {
@@ -432,6 +528,19 @@
       }
     },
     "query": "SELECT server_id from guilds where discord_id = $1"
+  },
+  "b95946f6eff3102760e5505d6d4c7fa2231f69fe5533dfa6d32d956eb2adb712": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO tokens (discord_id, access_token)\n            VALUES ($1, $2)\n            "
   },
   "c5bd00327d5516fa8c59f4598b3f7646b5a49f89fc03a7c82312a5e1be3f09b5": {
     "describe": {
@@ -481,6 +590,27 @@
       }
     },
     "query": "\n            SELECT * FROM customers WHERE discord_id = $1\n            "
+  },
+  "d41abba2aa3761bf64e906f4899447e65b2d13321d975d0c843df82932015a90": {
+    "describe": {
+      "columns": [
+        {
+          "name": "cus_id",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            select cus_id from server_customers where discord_id = $1 and server_id = $2\n            "
   },
   "d493168ce2d394fc332d612d647199294a83168feb6cb13691c16de2083a8be2": {
     "describe": {
@@ -552,6 +682,19 @@
       }
     },
     "query": "\n            DELETE FROM owners WHERE discord_id = $1\n            "
+  },
+  "f0e629912dea502081494473c6f5b6d7cf4bef61738ad3ecec8f9521da4d3286": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        INSERT INTO guilds (discord_id, server_id)\n        VALUES ($1, $2)\n        on conflict (discord_id, server_id) do nothing\n        "
   },
   "f3b0d6e286c3125e9be186004c423b1cace0260fef5c6f5701fbd8b37825f002": {
     "describe": {

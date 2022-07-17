@@ -71,6 +71,7 @@ const SubCard: React.FC<Props> = (props: Props) => {
           <CardContent>
             <Typography variant="subtitle1">{props.sub.sub_name}</Typography>
             <Typography variant="body2">{props.sub.sub_description}</Typography>
+            <Typography variant="body2">{props.sub.role_name}</Typography>
             <Typography variant="body2">
               ${props.sub.sub_price} / month
             </Typography>

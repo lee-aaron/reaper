@@ -1,13 +1,11 @@
 import {
-  Box,
-  Button,
   Card,
   CardHeader,
   Container,
   Grid,
   Paper,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
@@ -16,35 +14,17 @@ import { CreateAccount } from "../../src/components/Account/";
 import AccountLink from "../../src/components/Account/AccountLink";
 import Payment from "../../src/components/Product";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
-import { useUser } from "../../src/state/discord/hooks";
 import { useOwner } from "../../src/state/payments/hooks";
 
 const Create: NextPage = () => {
   const theme = useTheme();
   const isAuthenticated = useIsAuthenticated();
   const router = useRouter();
-  const user = useUser();
   const owner = useOwner();
 
   if (!isAuthenticated) {
     router.push("/login");
   }
-
-  const handleDelete = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    const deleteUrl = new URL("/api/v1/delete_account", window.location.origin);
-
-    const response = await fetch(deleteUrl.toString(), {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: `"${user.id}"`,
-    }).then((res) => res.json());
-
-    console.log(response);
-  };
 
   return (
     <React.Fragment>
@@ -95,20 +75,6 @@ const Create: NextPage = () => {
           <CreateAccount />
         )}
       </Container>
-      <form onSubmit={handleDelete}>
-        <Container maxWidth="md">
-          <Grid item xl={2}>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-              }}
-            >
-              <Button type="submit">Delete Account</Button>
-            </Box>
-          </Grid>
-        </Container>
-      </form>
     </React.Fragment>
   );
 };

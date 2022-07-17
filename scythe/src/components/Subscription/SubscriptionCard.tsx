@@ -5,7 +5,7 @@ import {
   CardContent,
   CardHeader,
   Grid,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
@@ -61,26 +61,22 @@ const SubscriptionCard: React.FC<{}> = () => {
         alignItems="center"
         justifyContent="center"
       >
-        {sub.loading === "loading" ? (
-          <Loading />
-        ) : (
-          <Card sx={{ px: 5 }}>
-            <CardHeader title={sub.sub_name} />
-            <CardContent>
-              <Typography variant="body1">{sub.sub_description}</Typography>
-              <Typography variant="body1">${sub.sub_price} / month</Typography>
-            </CardContent>
-            <CardActions>
-              <LoadingButton
-                loading={stripe.loading === "idle"}
-                size="small"
-                onClick={handleClick}
-              >
-                Subscribe
-              </LoadingButton>
-            </CardActions>
-          </Card>
-        )}
+        <Card sx={{ px: 5 }}>
+          <CardHeader title={sub.sub_name} />
+          <CardContent>
+            <Typography variant="body1">{sub.sub_description}</Typography>
+            <Typography variant="body1">${sub.sub_price} / month</Typography>
+          </CardContent>
+          <CardActions>
+            <LoadingButton
+              loading={stripe.loading === "loading"}
+              size="small"
+              onClick={handleClick}
+            >
+              Subscribe
+            </LoadingButton>
+          </CardActions>
+        </Card>
       </Grid>
     </React.Fragment>
   );
