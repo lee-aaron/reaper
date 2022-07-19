@@ -1,6 +1,6 @@
 FROM lukemathwalker/cargo-chef:latest-rust-1.59.0 as chef
 WORKDIR /app
-RUN apt update && apt install lld clang -y
+RUN apt update && apt install lld clang cmake -y
 
 FROM chef as planner
 COPY . .

@@ -1,4 +1,13 @@
 application:
   host: 0.0.0.0
+  base_url: "https://shuudann.com"
 database:
   require_ssl: true
+discord:
+  client_id: "966453809335382106"
+  client_secret: "A_RnL_ikt2SF6bZ1lyGJhgdKPeQz3hof"
+  grant_type: "authorization_code"
+  redirect_uri: "https://shuudann.com/api/login"
+  frontend_uri: "https://shuudann.com"
+stripe:
+  secret_key: "sk_test_7YRSRbVKSQDOG5eFwGhmyNbb008VJ25gVL"
