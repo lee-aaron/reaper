@@ -78,15 +78,6 @@ const NavMenu: React.FC<{}> = () => {
             >
               <ListItemText primary="Subscribe to a Guild" />
             </ListItemButton>
-            <ListItemButton
-              component="a"
-              onClick={() => {
-                toggleNavMenu();
-                router.push("/faq");
-              }}
-            >
-              <ListItemText primary="FAQ" />
-            </ListItemButton>
           </List>
         </Container>
       </SwipeableDrawer>

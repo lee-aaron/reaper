@@ -19,3 +19,8 @@ export function useRoles() {
   const roles = useAppSelector((state) => state.payments.roles);
   return roles;
 }
+
+export function useProduct() {
+  const prod = useAppSelector((state) => state.payments.prod);
+  return prod;
+}

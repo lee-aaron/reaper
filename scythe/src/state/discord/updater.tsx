@@ -10,7 +10,7 @@ export default function Updater(): null {
   useEffect(() => {
     if (!isAuthenticated) return;
     dispatch(GetUser());
-  }, [dispatch, isAuthenticated]);
+  }, [isAuthenticated]);
 
   return null;
 }

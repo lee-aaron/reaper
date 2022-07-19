@@ -154,7 +154,6 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 			// Continue to provision the subscription as payments continue to be made.
 			// Store the status in your database and check when a user accesses your service.
 			// This approach helps you avoid hitting rate limits.
-
 			var invoice stripe.Invoice
 			err := json.Unmarshal(event.Data.Raw, &invoice)
 			if err != nil {
@@ -162,7 +161,7 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			if invoice.Status == "paid" && invoice.Subscription != nil {
+			if invoice.Status == stripe.InvoiceStatusPaid && invoice.Subscription != nil {
 				// Update the status in the cus_subscriptions database
 				tx, err := db.BeginTx(ctx, nil)
 				if err != nil {
@@ -173,14 +172,6 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				defer tx.Rollback()
 
 				_, err = tx.ExecContext(ctx, "UPDATE cus_subscriptions SET status = 'paid' WHERE sub_id = $1", invoice.Subscription.ID)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
-				// increment number of subscribed
-				_, err = tx.ExecContext(ctx, "UPDATE sub_info SET num_subscribed = num_subscribed + 1 WHERE prod_id = (select prod_id from cus_subscriptions where sub_id = $1)", invoice.Subscription.ID)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
@@ -224,14 +215,6 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 					return
 				}
 
-				// Remove access token from database
-				_, err = tx.ExecContext(ctx, "DELETE FROM tokens WHERE discord_id = $1", userId)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error deleting access token: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
-
 				err = tx.Commit()
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
@@ -266,6 +249,7 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+
 				err = tx.Commit()
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
@@ -315,6 +299,14 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				return
 			}
 
+			// Remove access token from database
+			_, err = tx.ExecContext(ctx, "DELETE FROM tokens WHERE discord_id = $1", userId)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error deleting access token: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+
 			err = tx.Commit()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
@@ -340,30 +332,71 @@ func webhookHandler(db *sql.DB, session *discordgo.Session) http.HandlerFunc {
 				return
 			}
 
-			// Remove pending subscription from the database
-			if subscription.Status == stripe.SubscriptionStatusIncompleteExpired {
+			tx, err := db.BeginTx(ctx, nil)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			defer tx.Rollback()
 
-				tx, err := db.BeginTx(ctx, nil)
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error starting transaction: %v\n", err)
+			if subscription.Status == stripe.SubscriptionStatusActive {
+				var serverId string
+				if err = tx.QueryRowContext(ctx, "SELECT server_id FROM cus_subscriptions WHERE sub_id = $1", subscription.ID).Scan(&serverId); err != nil {
+					fmt.Fprintf(os.Stderr, "Error getting server_id from database: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				defer tx.Rollback()
 
+				_, err = tx.ExecContext(ctx, `UPDATE bot_status SET bot_added = true where server_id = $1`, serverId)
+				if err != nil {
+					fmt.Println("Error updating bot_status: " + err.Error())
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				// increment number of subscribed
+				_, err = tx.ExecContext(ctx, "UPDATE sub_info SET num_subscribed = num_subscribed + 1 WHERE prod_id = (select prod_id from cus_subscriptions where sub_id = $1)", subscription.ID)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error updating subscription status in database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+
+			if subscription.Status == stripe.SubscriptionStatusPastDue {
+				var serverId string
+				var userId string
+				if err = tx.QueryRowContext(ctx, "SELECT server_id, discord_id FROM cus_subscriptions WHERE sub_id = $1", subscription.ID).Scan(&serverId, &userId); err != nil {
+					fmt.Fprintf(os.Stderr, "Error getting server_id, discord_id from database: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+
+				// Remove user from discord server
+				err = session.GuildMemberDelete(serverId, userId)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Error removing user from discord server: %v\n", err)
+					w.WriteHeader(http.StatusInternalServerError)
+					return
+				}
+			}
+
+			// Remove pending subscription from the database
+			if subscription.Status == stripe.SubscriptionStatusIncompleteExpired {
 				_, err = tx.ExecContext(ctx, "DELETE FROM cus_subscriptions WHERE sub_id = $1", subscription.ID)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "Error deleting subscription from database: %v\n", err)
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
+			}
 
-				err = tx.Commit()
-				if err != nil {
-					fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
-					w.WriteHeader(http.StatusInternalServerError)
-					return
-				}
+			err = tx.Commit()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Error committing transaction: %v\n", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 
 		case "product.deleted":

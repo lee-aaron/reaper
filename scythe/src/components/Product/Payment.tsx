@@ -26,8 +26,8 @@ import React, { useEffect, useState } from "react";
 import { GetGuilds } from "../../state/discord/actions";
 import { useAdminGuilds, useUser } from "../../state/discord/hooks";
 import { useAppDispatch } from "../../state/hooks";
-import { GetRole } from "../../state/payments/actions";
-import { useRoles } from "../../state/payments/hooks";
+import { CreateProduct, GetRole } from "../../state/payments/actions";
+import { useProduct, useRoles } from "../../state/payments/hooks";
 import { DashboardSubscription } from "../../state/payments/reducer";
 import SubCard from "../Subscription/Card";
 
@@ -40,6 +40,7 @@ const Payment: React.FC<{}> = () => {
   const guilds = useAdminGuilds();
   const user = useUser();
   const roles = useRoles();
+  const prod = useProduct();
   const [loading, setLoading] = React.useState(false);
   const [sub, setSub] = React.useState<DashboardSubscription>();
   const [roleId, setRole] = React.useState("");
@@ -58,6 +59,15 @@ const Payment: React.FC<{}> = () => {
     if (!discord_id) return;
     dispatch(GetRole({ server_id: discord_id }));
   }, [discord_id]);
+
+  useEffect(() => {
+    if (!prod.loading) return;
+    if (prod.loading === "loading") {
+      setLoading(true);
+    } else {
+      setLoading(false);
+    }
+  }, [prod.loading]);
 
   useEffect(() => {
     if (!discord_id || !form) return;
@@ -92,36 +102,21 @@ const Payment: React.FC<{}> = () => {
 
     const guild = guilds.filter((g) => g.id === discord_id);
     const roleName = roles.roles.filter((r: any) => r.id === roleId).length > 0 ? roles.roles.filter((r: any) => r.id === roleId)[0].name : "";
-    setLoading(true);
 
-    fetch("/api/v1/create_product", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: form.productName,
-        email: user.email,
-        product_name: form.productName,
-        description: form.productDescription,
-        price: Number(form.productAmount),
-        target_server: discord_id,
-        discord_id: user.id,
-        discord_name: guild[0].name,
-        discord_icon: guild[0].icon || "",
-        discord_description: form.serverDescription,
-        role_id: roleId || undefined,
-        role_name: roleName || undefined,
-      }),
-    })
-      .then((res) => {
-        console.log(res.status);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-        setLoading(false);
-      });
+    dispatch(CreateProduct({
+      name: form.productName,
+      email: user.email,
+      product_name: form.productName,
+      description: form.productDescription,
+      price: Number(form.productAmount),
+      target_server: discord_id,
+      discord_id: user.id,
+      discord_name: guild[0].name,
+      discord_icon: guild[0].icon || "",
+      discord_description: form.serverDescription,
+      role_id: roleId || undefined,
+      role_name: roleName || undefined,
+    }));
   };
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {

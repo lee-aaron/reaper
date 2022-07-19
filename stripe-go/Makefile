@@ -26,7 +26,7 @@ build-discord:
 	CGO_ENABLED=0 go build -o build/package/stripe-go/discord cmd/discord/main.go
 
 build-stripe:
-	CGO_ENABLED=0 go build -o build/package/stripe-go/stripe-go cmd/stripe-go/main.go
+	CGO_ENABLED=0 go build -o build/package/stripe-go/stripe cmd/stripe-go/main.go
 
 build: build-discord build-stripe
 

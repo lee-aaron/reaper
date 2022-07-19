@@ -13,7 +13,7 @@ export default function Updater(): null {
     if (!isAuthenticated || !user.id) return;
     dispatch(GetAccount({ discord_id: user.id }));
     dispatch(GetCustomer({ discord_id: user.id }));
-  }, [dispatch, isAuthenticated, user.id]);
+  }, [isAuthenticated, user.id]);
 
   return null;
 }

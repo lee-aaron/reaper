@@ -11,7 +11,7 @@ export default function Updater(): null {
     return () => {
       promise.abort();
     };
-  }, [dispatch]);
+  }, []);
 
   return null;
 }

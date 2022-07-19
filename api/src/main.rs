@@ -1,11 +1,12 @@
-use guilds::startup::Application;
+use api::{startup::Application, telemetry::{get_subscriber, init_subscriber}};
 use shared::configuration::get_configuration;
 use std::fmt::{Debug, Display};
 use tokio::task::JoinError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
+    let subscriber = get_subscriber("guilds".into(), "info".into(), std::io::stdout);
+    init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration");
     let application = Application::build(configuration.clone()).await?;

@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import SnackbarUtils from '../../utils/SnackbarUtils';
 
 export const loginRequest = createAsyncThunk(
   "auth/loginRequest",
@@ -8,7 +9,8 @@ export const loginRequest = createAsyncThunk(
         signal: thunkAPI.signal,
       });
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return true;
     } catch (err) {
@@ -25,7 +27,8 @@ export const logoutRequest = createAsyncThunk(
         signal: thunkAPI.signal,
       });
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return true;
     } catch (err) {

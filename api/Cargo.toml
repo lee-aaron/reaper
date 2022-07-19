@@ -1,9 +1,9 @@
 [[bin]]
 path = 'src/main.rs'
-name = 'guilds'
+name = 'api'
 
 [package]
-name = 'guilds'
+name = 'api'
 version = '0.1.0'
 edition = '2021'
 
@@ -11,13 +11,13 @@ edition = '2021'
 path = 'src/lib.rs'
 
 [dependencies]
-async-trait = "0.1.53"
+async-trait = '0.1.53'
 chrono = '0.4.15'
 log = '0.4'
 prost = '0.10'
 prost-types = '0.10'
 actix-web = '4.0'
-actix-governor = "0.3"
+actix-governor = '0.3'
 actix-files = '0.6'
 anyhow = '1.0.40'
 tracing-actix-web = '0.5'
@@ -29,11 +29,23 @@ tracing-log = '0.1.1'
 urlencoding = '2'
 thiserror = '1.0.24'
 actix-web-lab = '0.15'
-reqwest = '0.11.10'
 base64 = '0.13.0'
-shared = { path = "../shared" }
-stripe-server = { path = "../stripe-go" }
-tonic = "0.7.2"
+tonic = '0.7.2'
+
+[dependencies.reqwest]
+version = '0.11.11'
+default-features = false
+features = [
+    'json',
+    'rustls-tls',
+    'cookies',
+]
+
+[dependencies.shared]
+path = '../shared'
+
+[dependencies.stripe-server]
+path = '../stripe-go'
 
 [dependencies.tokio]
 version = '1.18.2'
@@ -95,6 +107,5 @@ features = [
 [dependencies.actix-web-flash-messages]
 version = '0.3'
 features = ['cookies']
-
 [build-dependencies.tonic-build]
 version = '0.7.2'

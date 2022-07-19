@@ -1,4 +1,5 @@
 import { createAction, createAsyncThunk } from "@reduxjs/toolkit";
+import SnackbarUtils from '../../utils/SnackbarUtils';
 
 export const CreateCustomer = createAsyncThunk(
   "payments/customer/create",
@@ -30,7 +31,8 @@ export const CreateCustomer = createAsyncThunk(
         body: JSON.stringify(query),
       });
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -101,8 +103,10 @@ export const CreateAccount = createAsyncThunk(
       }),
     });
     if (res.status !== 200) {
+      SnackbarUtils.error(res.statusText);
       return thunkAPI.rejectWithValue(res.statusText);
     }
+    SnackbarUtils.success("Account Created");
     return await res.json();
   }
 );
@@ -122,7 +126,7 @@ export const GetAccount = createAsyncThunk(
       accountUrl.searchParams.append("discord_id", discord_id);
       const res = await fetch(accountUrl.toString());
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -149,7 +153,8 @@ export const SearchProduct = createAsyncThunk(
       productUrl.searchParams.append("prod_id", prod_id);
       const res = await fetch(productUrl.toString());
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -176,7 +181,8 @@ export const SearchSubscription = createAsyncThunk(
       subscriptionUrl.searchParams.append("discord_id", discord_id);
       const res = await fetch(subscriptionUrl.toString());
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -203,7 +209,8 @@ export const SearchOwnerSubscription = createAsyncThunk(
       subscriptionUrl.searchParams.append("discord_id", discord_id);
       const res = await fetch(subscriptionUrl.toString());
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -243,8 +250,10 @@ export const CancelSubscription = createAsyncThunk(
         }),
       });
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
+      SnackbarUtils.success("Subscription cancelled");
       return await res.json();
     } catch (err) {
       return thunkAPI.rejectWithValue("");
@@ -270,8 +279,52 @@ export const GetRole = createAsyncThunk(
       roleUrl.searchParams.append("server_id", server_id);
       const res = await fetch(roleUrl.toString());
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
+      return await res.json();
+    } catch (err) {
+      return thunkAPI.rejectWithValue("");
+    }
+  }
+)
+
+export const CreateProduct = createAsyncThunk(
+  "payments/products/create",
+  async (
+    body: {
+      name: string;
+      email: string;
+      product_name: string;
+      description: string;
+      price: number;
+      target_server: string;
+      discord_id: string;
+      discord_name: string;
+      discord_icon: string;
+      discord_description: string;
+      role_id: string | undefined;
+      role_name: string | undefined;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const productUrl = new URL(
+        "/api/v1/create_product",
+        window.location.origin
+      );
+      const res = await fetch(productUrl.toString(), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+      if (res.status !== 200) {
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
+      }
+      SnackbarUtils.success("Product created");
       return await res.json();
     } catch (err) {
       return thunkAPI.rejectWithValue("");

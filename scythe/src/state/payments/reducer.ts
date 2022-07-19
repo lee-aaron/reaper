@@ -2,6 +2,7 @@ import { createReducer } from "@reduxjs/toolkit";
 import {
   CreateAccount,
   CreateCustomer,
+  CreateProduct,
   GetAccount,
   GetCustomer,
   GetRole,
@@ -61,11 +62,16 @@ export interface Subscription {
   loading: string;
 }
 
+export interface Product {
+  loading: string;
+}
+
 export const initialState: {
   cus: Customer;
   owner: Owner;
   sub: Subscription;
   roles: Roles;
+  prod: Product;
 } = {
   cus: {
     loading: "",
@@ -93,6 +99,9 @@ export const initialState: {
   roles: {
     loading: "",
     roles: [],
+  },
+  prod: {
+    loading: "",
   },
 };
 
@@ -217,5 +226,18 @@ export default createReducer(initialState, (builder) => {
       if (!action.meta.aborted) {
         state.roles.loading = "error";
       }
-    });
+    })
+    .addCase(CreateProduct.pending, (state) => {
+      state.prod.loading = "loading";
+    })
+    .addCase(CreateProduct.fulfilled, (state) => {
+      if (state.prod.loading === "loading") {
+        state.prod.loading = "idle";
+      }
+    })
+    .addCase(CreateProduct.rejected, (state, action) => {
+      if (!action.meta.aborted) {
+        state.prod.loading = "error";
+      }
+    })
 });

@@ -1,5 +1,5 @@
 mod guilds;
 mod user;
 
-pub use guilds::*;
+pub use self::guilds::*;
 pub use user::*;

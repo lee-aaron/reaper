@@ -43,7 +43,7 @@ const Header: React.FC<Props> = (props: Props) => {
             variant="h4"
             onClick={() => props.router.push("/")}
           >
-            Guilds.gg
+            Shuudann
           </Typography>
           <Tooltip title="Dark Mode">
             <IconButton onClick={props.toggleColorMode}>
@@ -69,7 +69,9 @@ const Header: React.FC<Props> = (props: Props) => {
               </Link>
             )}
           </IconButton>
-          <SettingsMenu />
+          {
+            isAuthenticated ? <SettingsMenu /> : null
+          }
         </Toolbar>
       </AppBar>
     </React.Fragment>

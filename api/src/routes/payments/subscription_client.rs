@@ -452,7 +452,7 @@ pub struct SubscriptionCancelReq {
 pub async fn cancel_subscriptions(
     client: web::Data<Payment>,
     pg: web::Data<PgPool>,
-    req: web::Json<SubscriptionCancelReq>,
+    req: web::Json<SubscriptionCancelReq>
 ) -> Result<HttpResponse, SubscriptionError> {
     // find owner's stripe id
     let owner_id = get_owner_id(&pg, req.0.server_id.clone())

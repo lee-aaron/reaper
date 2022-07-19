@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import SnackbarUtils from '../../utils/SnackbarUtils';
 import { AppState } from "..";
 
 export const GetGuilds = createAsyncThunk(
@@ -9,7 +10,8 @@ export const GetGuilds = createAsyncThunk(
         new URL("/api/v1/get_guilds", window.location.origin)
       );
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {
@@ -35,7 +37,8 @@ export const GetUser = createAsyncThunk(
         new URL("/api/v1/get_user", window.location.origin)
       );
       if (res.status !== 200) {
-        throw new Error(res.statusText);
+        SnackbarUtils.error(res.statusText);
+        return thunkAPI.rejectWithValue(res.statusText);
       }
       return await res.json();
     } catch (err) {

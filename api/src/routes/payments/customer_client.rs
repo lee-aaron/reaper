@@ -132,6 +132,7 @@ impl CustomerClient {
             r#"
             INSERT INTO tokens (discord_id, access_token)
             VALUES ($1, $2)
+            on conflict (discord_id, access_token) do update set access_token = $2
             "#,
             discord_id,
             access_token

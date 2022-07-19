@@ -48,6 +48,9 @@ func (srv *PortalServer) CreatePortal(ctx context.Context, req *pb.CreatePortalR
 				PaymentMethodUpdate: &stripe.BillingPortalConfigurationFeaturesPaymentMethodUpdateParams{
 					Enabled: stripe.Bool(true),
 				},
+				InvoiceHistory: &stripe.BillingPortalConfigurationFeaturesInvoiceHistoryParams{
+					Enabled: stripe.Bool(true),
+				},
 			},
 		}
 		billingParams.SetStripeAccount(req.StripeAccount)

@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "api",
-    "stripe-go",
-    "shared"
+    'api',
+    'stripe-go',
+    'shared'
 ]

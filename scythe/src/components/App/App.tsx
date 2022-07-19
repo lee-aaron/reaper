@@ -7,6 +7,8 @@ import DiscordUpdater from "../../state/discord/updater";
 import PaymentsUpdater from "../../state/payments/updater";
 import Footer from "../Footer";
 import Header from "../Header";
+import { SnackbarUtilsConfigurator } from "../../utils/SnackbarUtils";
+import { DEFAULT_DISMISS_MS } from "../../constants/misc";
 
 function Updaters() {
   return (
@@ -27,11 +29,13 @@ const App = ({ children }: { children: React.ReactNode }) => {
       <SnackbarProvider
         maxSnack={5}
         preventDuplicate
+        autoHideDuration={DEFAULT_DISMISS_MS}
         anchorOrigin={{
           vertical: "bottom",
           horizontal: "right",
         }}
       >
+        <SnackbarUtilsConfigurator />
         <Updaters />
         <React.Fragment>
           <Header toggleColorMode={toggleDarkMode} />
