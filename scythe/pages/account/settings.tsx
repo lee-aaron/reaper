@@ -52,7 +52,7 @@ const Subscribe: NextPage = () => {
         discord_id: user.id,
       })
     );
-  }, [user.id, cus.user_created]);
+  }, [dispatch, user.id, cus.user_created]);
 
   const handleCancel = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

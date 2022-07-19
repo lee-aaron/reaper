@@ -47,7 +47,7 @@ const Dashboard: NextPage = () => {
         discord_id: user.id,
       })
     );
-  }, [user.id, cus.user_created]);
+  }, [dispatch, user.id, cus.user_created]);
 
   useEffect(() => {
     // fetch owner subscriptions
@@ -58,7 +58,7 @@ const Dashboard: NextPage = () => {
         discord_id: user.id,
       })
     );
-  }, [owner.id, user.id]);
+  }, [dispatch, owner.id, user.id]);
 
   return (
     <React.Fragment>

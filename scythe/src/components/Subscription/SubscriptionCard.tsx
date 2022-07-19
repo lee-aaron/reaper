@@ -29,7 +29,7 @@ const SubscriptionCard: React.FC<{}> = () => {
     if (!router.query.prod_id) return;
 
     dispatch(SearchProduct({ prod_id: router.query.prod_id as string }));
-  }, [router.isReady]);
+  }, [router.isReady, router.query.prod_id, dispatch]);
 
   // router push to checkout page when customer secret loads
   useEffect(() => {
@@ -38,7 +38,7 @@ const SubscriptionCard: React.FC<{}> = () => {
         `/subscribe/${router.query.server_id}/${router.query.prod_id}/checkout`
       );
     }
-  }, [stripe.secret]);
+  }, [stripe.secret, router]);
 
   const handleClick = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();

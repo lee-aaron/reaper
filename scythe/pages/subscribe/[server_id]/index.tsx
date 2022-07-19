@@ -47,7 +47,7 @@ const SubscribePage: React.FC<{}> = () => {
         setProds(res);
         setLoading(false);
       });
-  }, [router.isReady]);
+  }, [router.query.server_id, router.isReady]);
 
   if (loading) {
     return <Loading />;

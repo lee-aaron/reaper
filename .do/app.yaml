@@ -34,19 +34,19 @@ services:
         value: ${APP_URL}
       - key: APP_DATABASE__USERNAME
         scope: RUN_TIME
-        value: ${postgres.USERNAME}
+        value: ${postgres-cluster.USERNAME}
       - key: APP_DATABASE__PASSWORD
         scope: RUN_TIME
-        value: ${postgres.PASSWORD}
+        value: ${postgres-cluster.PASSWORD}
       - key: APP_DATABASE__HOST
         scope: RUN_TIME
-        value: ${postgres.HOSTNAME}
+        value: ${postgres-cluster.HOSTNAME}
       - key: APP_DATABASE__PORT
         scope: RUN_TIME
-        value: ${postgres.PORT}
+        value: ${postgres-cluster.PORT}
       - key: APP_DATABASE__DATABASE_NAME
         scope: RUN_TIME
-        value: ${postgres.DATABASE}
+        value: ${postgres-cluster.DATABASE}
   - name: discord
     dockerfile_path: build/package/discord/Dockerfile
     source_dir: .
@@ -77,5 +77,5 @@ domains:
     zone: shuudann.com
 databases:
   - engine: PG
-    name: postgres
+    name: postgres-cluster
     version: "12"

@@ -21,6 +21,10 @@ const nextConfig = (phase, { defaultConfig }) => {
     ...defaultConfig,
     swcMinify: true,
     poweredByHeader: false,
+    images: {
+      loader: "akamai",
+      path: "/"
+    },
   };
 };
 

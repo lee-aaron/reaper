@@ -84,7 +84,7 @@ const Subscribe: NextPage = () => {
         })
         .catch((err) => console.error(err));
     }
-  }, [router.isReady]);
+  }, [router.query.discord_name, router.isReady]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = event.currentTarget;

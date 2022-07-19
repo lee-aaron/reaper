@@ -53,12 +53,12 @@ const Payment: React.FC<{}> = () => {
 
   useEffect(() => {
     dispatch(GetGuilds());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!discord_id) return;
     dispatch(GetRole({ server_id: discord_id }));
-  }, [discord_id]);
+  }, [dispatch, discord_id]);
 
   useEffect(() => {
     if (!prod.loading) return;
@@ -89,7 +89,7 @@ const Payment: React.FC<{}> = () => {
       role_id: roleId,
       role_name: roleName,
     });
-  }, [form, discord_id, roleId]);
+  }, [form, discord_id, roleId, guilds, roles.roles]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

@@ -43,7 +43,7 @@ const FAQ: NextPage = () => {
             <Typography variant="body1" align="center">
               As a user, you can login with discord by clicking on the login
               button on the top right. You can then create a private
-              subscription to a creator's platform such as Discord. Also as a
+              subscription to a creator&apos;s platform such as Discord. Also as a
               user, you can create a private subscription to your own Discord
               server.
             </Typography>

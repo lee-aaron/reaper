@@ -29,7 +29,7 @@ const Payment: React.FC<{}> = () => {
         stripeAccount: stripe.prod_id[router.query.prod_id as string],
       })
     );
-  }, [stripe.prod_id[router.query.prod_id as string]]);
+  }, [router.query.prod_id, stripe.prod_id]);
 
   return (
     <React.Fragment>

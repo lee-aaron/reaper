@@ -4,7 +4,7 @@ import {
   Grid,
   Paper,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
 import Image from "next/image";
@@ -25,7 +25,7 @@ const Login: NextPage = () => {
 
   useEffect(() => {
     router.prefetch("/dashboard");
-  }, []);
+  }, [router]);
 
   return (
     <React.Fragment>
@@ -71,7 +71,7 @@ const Login: NextPage = () => {
                 }}
                 variant="outlined"
               >
-                <Image src={discord} height="50%" />
+                <Image src={discord} height="50%" alt="discord logo" />
                 <Typography
                   variant="button"
                   align="center"

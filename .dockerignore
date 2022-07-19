@@ -1,0 +1,10 @@
+.env
+.dockerignore
+.do
+migrations/
+target/
+Dockerfile
+scripts/
+.next/
+out/
+node_modules/

@@ -48,7 +48,7 @@ const Home: NextPage = () => {
                 Services
               </Typography>
               <Typography variant="body1" align="center">
-                Users can create a private subscription to a creator's platform
+                Users can create a private subscription to a creator&apos;s platform
                 such as Discord
               </Typography>
             </Paper>

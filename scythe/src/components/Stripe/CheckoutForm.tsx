@@ -27,7 +27,7 @@ const CheckoutForm: React.FC<{}> = () => {
     return () => {
       router.events.off("routeChangeStart", onBeforeUnload);
     }
-  }, [message]);
+  }, [message, dispatch, router.events, router.query.prod_id]);
 
   useEffect(() => {
     if (!stripe) {
