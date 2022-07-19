@@ -1,9 +1,9 @@
 FROM node:alpine as build
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-COPY ./package.json /app/
-COPY ./yarn.lock /app/
-RUN yarn --silent
+COPY scythe/package.json /app/
+COPY scythe/yarn.lock /app/
+RUN yarn install --silent
 COPY . /app
 RUN yarn build
 
