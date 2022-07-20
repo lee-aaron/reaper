@@ -63,7 +63,6 @@ pub struct DiscordSettings {
     pub grant_type: String,
     pub redirect_uri: String,
     pub frontend_uri: String,
-    pub bot_uri: String,
     pub bot_token: String,
 }
 

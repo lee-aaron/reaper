@@ -45,6 +45,12 @@ services:
       - key: APP_DATABASE__DATABASE_NAME
         scope: RUN_TIME
         value: ${postgres-cluster.DATABASE}
+      - key: APP_REDIS_URI
+        scope: RUN_TIME
+        value: ${redis-cluster.REDIS_URL}
+      - key: RUST_LOG
+        scope: RUN_TIME
+        value: error
   - name: discord
     dockerfile_path: build/package/discord/Dockerfile
     source_dir: .
@@ -59,6 +65,22 @@ services:
       - path: /webhook
       - path: /roles
       - path: /botcheck
+    envs:
+      - key: APP_DATABASE__USERNAME
+        scope: RUN_TIME
+        value: ${postgres-cluster.USERNAME}
+      - key: APP_DATABASE__PASSWORD
+        scope: RUN_TIME
+        value: ${postgres-cluster.PASSWORD}
+      - key: APP_DATABASE__HOST
+        scope: RUN_TIME
+        value: ${postgres-cluster.HOSTNAME}
+      - key: APP_DATABASE__PORT
+        scope: RUN_TIME
+        value: ${postgres-cluster.PORT}
+      - key: APP_DATABASE__DATABASE_NAME
+        scope: RUN_TIME
+        value: ${postgres-cluster.DATABASE}
 workers:
   - name: stripe
     dockerfile_path: build/package/stripe/Dockerfile
@@ -77,3 +99,8 @@ databases:
   - engine: PG
     name: postgres-cluster
     version: "12"
+  - engine: REDIS
+    name: redis-cluster
+    cluster_name: db-redis-sfo3-06834
+    production: true
+    version: "6"

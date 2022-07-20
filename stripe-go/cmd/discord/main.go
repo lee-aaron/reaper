@@ -32,7 +32,11 @@ func startSession(token string, db *sql.DB) (*discordgo.Session, error) {
 		return nil, err
 	}
 
-	session.LogLevel = discordgo.LogInformational
+	if os.Getenv("GO_ENV") == "production" {
+		session.LogLevel = discordgo.LogError
+	} else {
+		session.LogLevel = discordgo.LogInformational
+	}
 	session.State.TrackEmojis = false
 	session.State.TrackEmojis = false
 	session.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsAll)

@@ -3,9 +3,10 @@ package utils
 import (
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 
-	"github.com/gookit/config/v2"
-	"github.com/gookit/config/v2/yamlv3"
+	"github.com/spf13/viper"
 )
 
 type Settings struct {
@@ -45,7 +46,7 @@ type DiscordSettings struct {
 }
 
 const (
-	Development = "development"
+	Development = "local"
 	Production  = "production"
 )
 
@@ -57,13 +58,19 @@ func GetEnvironment() string {
 	return env
 }
 
+func filter(envs []string) (ret []string) {
+	for _, env := range envs {
+		if strings.HasPrefix(env, "APP_") {
+			ret = append(ret, env)
+		}
+	}
+	return
+}
+
 func LoadYaml() Settings {
 	env := GetEnvironment()
 
 	var settings Settings
-
-	config.WithOptions(config.ParseEnv)
-	config.AddDriver(yamlv3.Driver)
 
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -74,28 +81,49 @@ func LoadYaml() Settings {
 		panic(err)
 	}
 
-	err = config.LoadFiles(filepath.Join(pwd, "base.yaml"), filepath.Join(pwd, env+".yaml"))
+	viper.SetConfigFile(filepath.Join(pwd, "base.yaml"))
+	err = viper.ReadInConfig()
 	if err != nil {
 		panic(err)
 	}
 
-	settings.Application.Host = config.String("application.host")
-	settings.Application.Port = config.Uint("application.port")
+	viper.SetConfigFile(filepath.Join(pwd, env+".yaml"))
+	viper.MergeInConfig()
 
-	settings.Payments.Port = config.Uint("payments.port")
-	settings.Payments.Host = config.String("payments.host")
-	settings.Payments.WebhookPort = config.Uint("payments.webhook_port")
+	if env == Development {
+		viper.WatchConfig()
+	}
 
-	settings.Stripe.Secret_key = config.String("stripe.secret_key")
+	err = viper.Unmarshal(&settings)
+	if err != nil {
+		panic(err)
+	}
 
-	settings.Database.Username = config.String("database.username")
-	settings.Database.Password = config.String("database.password")
-	settings.Database.Port = config.Uint("database.port")
-	settings.Database.Host = config.String("database.host")
-	settings.Database.Database_name = config.String("database.database_name")
-	settings.Database.Require_ssl = config.Bool("database.require_ssl")
+	// Override database settings
+	envs := filter(os.Environ())
+	for _, env := range envs {
+		vars := strings.Split(env, "=")
+		// trim key by APP_ prefix and replace __ with .
+		key := strings.TrimPrefix(vars[0], "APP_")
+		key = strings.Replace(key, "__", ".", -1)
+		key = strings.ToLower(key)
 
-	settings.Discord.Bot_token = config.String("discord.bot_token")
+		switch key {
+		case "database.username":
+			settings.Database.Username = vars[1]
+		case "database.password":
+			settings.Database.Password = vars[1]
+		case "database.port":
+			u64, _ := strconv.ParseUint(vars[1], 10, 32)
+			settings.Database.Port = uint(u64)
+		case "database.host":
+			settings.Database.Host = vars[1]
+		case "database.database_name":
+			settings.Database.Database_name = vars[1]
+		case "database.require_ssl":
+			settings.Database.Require_ssl = vars[1] == "true"
+		}
+	}
 
 	return settings
 }

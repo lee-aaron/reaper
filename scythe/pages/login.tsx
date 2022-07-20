@@ -11,13 +11,16 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import discord from "../public/discord_logo_small.svg";
+import { loginRequest } from "../src/state/authentication/actions";
 import { useIsAuthenticated } from "../src/state/authentication/hooks";
+import { useAppDispatch } from "../src/state/hooks";
 
 const Login: NextPage = () => {
   const theme = useTheme();
 
   const isAuthenticated = useIsAuthenticated();
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   if (isAuthenticated) {
     router.push("/dashboard");
@@ -26,6 +29,15 @@ const Login: NextPage = () => {
   useEffect(() => {
     router.prefetch("/dashboard");
   }, [router]);
+
+  useEffect(() => {
+    if (!router.query.code || !router.query.state) return;
+
+    dispatch(loginRequest({
+      code: router.query.code as string,
+      state: router.query.state as string,
+    }));
+  }, [dispatch, router.query.code, router.query.state]);
 
   return (
     <React.Fragment>

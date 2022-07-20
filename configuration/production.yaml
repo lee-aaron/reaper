@@ -7,7 +7,8 @@ discord:
   client_id: "966453809335382106"
   client_secret: "A_RnL_ikt2SF6bZ1lyGJhgdKPeQz3hof"
   grant_type: "authorization_code"
-  redirect_uri: "https://shuudann.com/api/login"
+  redirect_uri: "https://shuudann.com/login"
   frontend_uri: "https://shuudann.com"
+  bot_token: "OTY2NDUzODA5MzM1MzgyMTA2.GX_UYB.ugjXorGUho04BqB0QLG0dnmGy8nMMVSPQP8NXE"
 stripe:
   secret_key: "sk_test_7YRSRbVKSQDOG5eFwGhmyNbb008VJ25gVL"

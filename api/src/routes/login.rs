@@ -15,10 +15,10 @@ use shared::{
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct FormData {
-    code: Option<String>,
+    code: String,
     error: Option<String>,
     error_description: Option<String>,
-    state: Option<String>,
+    state: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -30,8 +30,27 @@ pub struct DiscordResponse {
     pub scope: String,
 }
 
+pub async fn login_form(session: TypedSession) -> Result<HttpResponse, InternalError<LoginError>> {
+    // Redirect to OAUTH API
+    let configuration = get_configuration().expect("Failed to read configuration");
+    let timestamp = compute_timestamp_hash().expect("Failed to compute timestamp hash");
+
+    let discord_uri = format!(
+        "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=guilds.join%20identify%20email%20guilds&state={}",
+        configuration.discord.client_id,
+        configuration.discord.redirect_uri,
+        encode(timestamp.expose_secret())
+    );
+
+    session
+        .insert_time_hash(timestamp.expose_secret().to_string())
+        .expect("Failed to insert time hash");
+
+    Ok(see_other(&discord_uri))
+}
+
 pub async fn login(
-    form: web::Query<FormData>,
+    form: web::Form<FormData>,
     session: TypedSession,
 ) -> Result<HttpResponse, InternalError<LoginError>> {
     // if credentials are not available, redirect to OAUTH API
@@ -44,80 +63,56 @@ pub async fn login(
 
     session.renew();
 
-    if form.code.is_none() {
-        let timestamp = compute_timestamp_hash().expect("Failed to compute timestamp hash");
+    let mut map = HashMap::new();
+    map.insert("client_id", configuration.discord.client_id);
+    map.insert("client_secret", configuration.discord.client_secret);
+    map.insert("grant_type", configuration.discord.grant_type);
+    map.insert("code", form.0.code.clone());
+    map.insert("redirect_uri", configuration.discord.redirect_uri);
+    
+    let state = decode(&form.0.state).expect("UTF-8").to_string();
+    let time_hash = session
+        .get_time_hash()
+        .expect("Failed to get time hash")
+        .ok_or(login_redirect(LoginError::UnexpectedError(anyhow!(
+            "Missing time hash"
+        ))))?;
 
-        let discord_uri = format!(
-            "https://discord.com/api/oauth2/authorize?client_id={}&redirect_uri={}&response_type=code&scope=guilds.join%20identify%20email%20guilds&state={}",
-            configuration.discord.client_id,
-            configuration.discord.redirect_uri,
-            encode(timestamp.expose_secret())
-        );
+    if time_hash != state {
+        return Err(login_redirect(LoginError::UnexpectedError(anyhow!(
+            "Invalid state"
+        ))));
+    }
 
-        session
-            .insert_time_hash(timestamp.expose_secret().to_string())
-            .expect("Failed to insert time hash");
+    session.clear_time_hash();
 
-        Ok(see_other(&discord_uri))
-    } else {
-        let code = form.0.code.unwrap();
-        let mut map = HashMap::new();
-        map.insert("client_id", configuration.discord.client_id);
-        map.insert("client_secret", configuration.discord.client_secret);
-        map.insert("grant_type", configuration.discord.grant_type);
-        map.insert("code", code.clone());
-        map.insert("redirect_uri", configuration.discord.redirect_uri);
-
-        let state = form
-            .0
-            .state
-            .ok_or(login_redirect(LoginError::UnexpectedError(anyhow!(
-                "Missing state"
-            ))))?;
-        let state = decode(&state).expect("UTF-8").to_string();
-        let time_hash = session
-            .get_time_hash()
-            .expect("Failed to get time hash")
-            .ok_or(login_redirect(LoginError::UnexpectedError(anyhow!(
-                "Missing time hash"
-            ))))?;
-
-        if time_hash != state {
-            return Err(login_redirect(LoginError::UnexpectedError(anyhow!(
-                "Invalid state"
-            ))));
-        }
-
-        session.clear_time_hash();
-
-        match reqwest::Client::new()
-            .post("https://discord.com/api/v10/oauth2/token")
-            .form(&map)
-            .send()
-            .await
-        {
-            Ok(response) => {
-                if response.status() == reqwest::StatusCode::OK {
-                    let discord_response =
-                        serde_json::from_str::<DiscordResponse>(&response.text().await.unwrap())
-                            .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
-                    session
-                        .insert_discord_oauth(discord_response)
+    match reqwest::Client::new()
+        .post("https://discord.com/api/v10/oauth2/token")
+        .form(&map)
+        .send()
+        .await
+    {
+        Ok(response) => {
+            if response.status() == reqwest::StatusCode::OK {
+                let discord_response =
+                    serde_json::from_str::<DiscordResponse>(&response.text().await.unwrap())
                         .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
-                    Ok(see_other(
-                        format!("{}{}", &configuration.discord.frontend_uri, "/dashboard").as_str(),
-                    ))
-                } else {
-                    let e = LoginError::UnexpectedError(anyhow::anyhow!(
-                        "Unexpected response from Discord"
-                    ));
-                    Err(login_redirect(e))
-                }
-            }
-            Err(e) => {
-                let e = LoginError::UnexpectedError(e.into());
+                session
+                    .insert_discord_oauth(discord_response)
+                    .map_err(|e| login_redirect(LoginError::UnexpectedError(e.into())))?;
+                Ok(see_other(
+                    format!("{}{}", &configuration.discord.frontend_uri, "/dashboard").as_str(),
+                ))
+            } else {
+                let e = LoginError::UnexpectedError(anyhow::anyhow!(
+                    "Unexpected response from Discord"
+                ));
                 Err(login_redirect(e))
             }
+        }
+        Err(e) => {
+            let e = LoginError::UnexpectedError(e.into());
+            Err(login_redirect(e))
         }
     }
 }
