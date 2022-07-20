@@ -120,8 +120,6 @@ func LoadYaml() Settings {
 			settings.Database.Host = vars[1]
 		case "database.database_name":
 			settings.Database.Database_name = vars[1]
-		case "database.require_ssl":
-			settings.Database.Require_ssl = vars[1] == "true"
 		}
 	}
 

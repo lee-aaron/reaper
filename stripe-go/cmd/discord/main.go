@@ -95,7 +95,8 @@ func main() {
 	if config.Database.Require_ssl {
 		sslmode = "require"
 	}
-	dbinfo := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", config.Database.Username, config.Database.Password, config.Database.Database_name, sslmode)
+	dbinfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		config.Database.Host, config.Database.Port, config.Database.Username, config.Database.Password, config.Database.Database_name, sslmode)
 	db, err := sql.Open("postgres", dbinfo)
 	if err != nil {
 		log.Fatal(err)

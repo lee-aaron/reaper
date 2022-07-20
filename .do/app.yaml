@@ -88,6 +88,10 @@ workers:
       tag: latest
     instance_count: 1
     instance_size_slug: professional-xs
+    envs:
+    - key: STRIPE_WEBHOOK_SECRET
+      scope: RUN_TIME
+      value: ${STRIPE_WEBHOOK_SECRET}
 domains:
   - domain: shuudann.com
     type: PRIMARY
