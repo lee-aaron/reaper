@@ -78,6 +78,9 @@ services:
       - key: APP_DATABASE__DATABASE_NAME
         scope: RUN_TIME
         value: ${postgres-cluster.DATABASE}
+      - key: STRIPE_WEBHOOK_SECRET
+        scope: RUN_TIME
+        value: ${STRIPE_WEBHOOK_SECRET}
 workers:
   - name: stripe
     dockerfile_path: build/package/stripe/Dockerfile
@@ -88,10 +91,6 @@ workers:
       tag: latest
     instance_count: 1
     instance_size_slug: professional-xs
-    envs:
-    - key: STRIPE_WEBHOOK_SECRET
-      scope: RUN_TIME
-      value: ${STRIPE_WEBHOOK_SECRET}
 domains:
   - domain: shuudann.com
     type: PRIMARY
