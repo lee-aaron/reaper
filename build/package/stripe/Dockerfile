@@ -6,8 +6,8 @@ FROM scratch
 
 COPY --from=base /etc/ssl/certs /etc/ssl/certs
 COPY --from=base /usr/share/zoneinfo /usr/share/zoneinfo
-COPY stripe-go .
+COPY stripe .
 
-EXPOSE 9000
+EXPOSE 8081
 
 ENTRYPOINT ["./stripe"]

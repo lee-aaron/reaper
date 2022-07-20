@@ -48,10 +48,10 @@ services:
   - name: discord
     dockerfile_path: build/package/discord/Dockerfile
     source_dir: .
-    github:
-      branch: main
-      deploy_on_push: true
-      repo: lee-aaron/reaper
+    image:
+      registry_type: DOCR
+      repository: reaper-discord
+      tag: latest
     http_port: 9001
     instance_count: 1
     instance_size_slug: professional-xs
@@ -63,10 +63,10 @@ workers:
   - name: stripe
     dockerfile_path: build/package/stripe/Dockerfile
     source_dir: .
-    github:
-      branch: main
-      deploy_on_push: true
-      repo: lee-aaron/reaper
+    image:
+      registry_type: DOCR
+      repository: reaper-stripe
+      tag: latest
     instance_count: 1
     instance_size_slug: professional-xs
 domains:

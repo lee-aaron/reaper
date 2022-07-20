@@ -45,7 +45,6 @@ tmp
 scripts/
 migrations/
 deployments/
-build/
 .do
 **/target/
 **/tmp/
