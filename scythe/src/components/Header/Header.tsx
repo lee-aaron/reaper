@@ -10,6 +10,7 @@ import {
   Typography,
   useTheme
 } from "@mui/material";
+import Head from "next/head";
 import Link from "next/link";
 import { NextRouter, withRouter } from "next/router";
 import React, { useCallback } from "react";
@@ -35,6 +36,9 @@ const Header: React.FC<Props> = (props: Props) => {
 
   return (
     <React.Fragment>
+      <Head>
+        <title>Shuudann</title>
+      </Head>
       <AppBar position="static">
         <Toolbar>
           {isAuthenticated ? <NavMenu /> : null}
