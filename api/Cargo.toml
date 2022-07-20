@@ -12,13 +12,12 @@ path = 'src/lib.rs'
 
 [dependencies]
 async-trait = '0.1.53'
-chrono = '0.4.15'
 log = '0.4'
 prost = '0.10'
 prost-types = '0.10'
 actix-web = '4.0'
+actix-session = { version = "0.6.0", features = ["redis-rs-tls-session"] }
 actix-governor = '0.3'
-actix-files = '0.6'
 anyhow = '1.0.40'
 tracing-actix-web = '0.5'
 serde_json = '1.0'
@@ -57,11 +56,6 @@ features = [
     'fs',
 ]
 
-[dependencies.actix-session]
-git = 'https://github.com/actix/actix-extras'
-branch = 'master'
-features = ['redis-rs-tls-session']
-
 [dependencies.serde]
 version = '1.0'
 features = [
@@ -96,16 +90,3 @@ features = [
     'migrate',
     'offline',
 ]
-
-[dependencies.uuid]
-version = '0.8.1'
-features = [
-    'v4',
-    'serde',
-]
-
-[dependencies.actix-web-flash-messages]
-version = '0.3'
-features = ['cookies']
-[build-dependencies.tonic-build]
-version = '0.7.2'

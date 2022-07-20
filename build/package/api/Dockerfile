@@ -1,9 +1,13 @@
-FROM lukemathwalker/cargo-chef:latest-rust-1.59.0 as chef
+FROM lukemathwalker/cargo-chef:latest as chef
 WORKDIR /app
 RUN apt update && apt install lld clang cmake -y
 
 FROM chef as planner
-COPY . .
+COPY api/ api/
+COPY shared/ shared/
+COPY stripe-go/ stripe-go/
+COPY configuration/ configuration/
+COPY Cargo.toml .
 # Compute a lock-like file for our project
 RUN cargo chef prepare  --recipe-path recipe.json
 
@@ -11,7 +15,11 @@ FROM chef as builder
 COPY --from=planner /app/recipe.json recipe.json
 # Build our project dependencies, not our application!
 RUN cargo chef cook --release --recipe-path recipe.json
-COPY . .
+COPY api/ api/
+COPY shared/ shared/
+COPY stripe-go/ stripe-go/
+COPY configuration/ configuration/
+COPY Cargo.toml .
 ENV SQLX_OFFLINE true
 # Build our project
 RUN cargo build --release --bin api
