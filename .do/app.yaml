@@ -1,6 +1,4 @@
 name: reaper
-features:
-- enable-kata-build
 services:
   - name: scythe
     dockerfile_path: build/package/scythe/Dockerfile
@@ -17,10 +15,10 @@ services:
   - name: api
     dockerfile_path: build/package/api/Dockerfile
     source_dir: .
-    github:
-      branch: main
-      deploy_on_push: true
-      repo: lee-aaron/reaper
+    image:
+      registry_type: DOCR
+      repository: reaper-api
+      tag: latest
     health_check:
       http_path: /health_check
     http_port: 8000
