@@ -6,7 +6,8 @@ FROM scratch
 
 COPY --from=base /etc/ssl/certs /etc/ssl/certs
 COPY --from=base /usr/share/zoneinfo /usr/share/zoneinfo
-COPY stripe .
+COPY build/package/stripe/ .
+COPY configuration /configuration
 
 EXPOSE 8081
 

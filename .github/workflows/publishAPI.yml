@@ -45,7 +45,7 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Build image
-        run: docker build -t reaper-stripe build/package/stripe/
+        run: docker build -t reaper-stripe -f build/package/stripe/Dockerfile .
 
       - name: Tag image
         run: docker tag reaper-stripe registry.digitalocean.com/lee-aaron-reg/reaper-stripe:latest
@@ -71,7 +71,7 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Build image
-        run: docker build -t reaper-discord build/package/discord/
+        run: docker build -t reaper-discord -f build/package/discord/Dockerfile .
     
       - name: Tag image
         run: docker tag reaper-discord registry.digitalocean.com/lee-aaron-reg/reaper-discord:latest
