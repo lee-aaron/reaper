@@ -9,6 +9,7 @@ COPY --from=base /usr/share/zoneinfo /usr/share/zoneinfo
 COPY build/package/discord/ .
 COPY configuration /configuration
 
+ENV GO_ENV production
 EXPOSE 9001
 
 ENTRYPOINT ["./discord"]

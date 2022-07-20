@@ -48,9 +48,6 @@ services:
       - key: APP_REDIS_URI
         scope: RUN_TIME
         value: ${redis-cluster.REDIS_URL}
-      - key: RUST_LOG
-        scope: RUN_TIME
-        value: error
   - name: discord
     dockerfile_path: build/package/discord/Dockerfile
     source_dir: .
