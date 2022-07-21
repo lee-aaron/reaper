@@ -19,6 +19,7 @@ const (
 	WebHookEndpoint  = "/webhook"
 	BotCheckEndpoint = "/botcheck"
 	RolesEndpoint    = "/roles"
+	HealthEndpoint   = "/healthcheck"
 )
 
 func NewServer(db *sql.DB, session *discordgo.Session, port string) *http.Server {
@@ -27,6 +28,9 @@ func NewServer(db *sql.DB, session *discordgo.Session, port string) *http.Server
 	mux.HandleFunc(WebHookEndpoint, webhookHandler(db, session))
 	mux.HandleFunc(BotCheckEndpoint, botCheckHandler(session))
 	mux.HandleFunc(RolesEndpoint, roleHandler(session))
+	mux.HandleFunc(HealthEndpoint, func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
 	return &http.Server{
 		Addr:    "0.0.0.0:" + port,

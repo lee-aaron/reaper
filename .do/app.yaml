@@ -8,7 +8,7 @@ services:
       deploy_on_push: false
       repo: lee-aaron/reaper
     http_port: 80
-    instance_count: 1
+    instance_count: 2
     instance_size_slug: professional-xs
     routes:
       - path: /
@@ -22,7 +22,7 @@ services:
     health_check:
       http_path: /health_check
     http_port: 8000
-    instance_count: 1
+    instance_count: 2
     instance_size_slug: professional-s
     routes:
       - path: /api
@@ -56,8 +56,10 @@ services:
       repository: reaper-discord
       tag: latest
     http_port: 9001
-    instance_count: 1
+    instance_count: 2
     instance_size_slug: professional-xs
+    health_check:
+      http_path: /healthcheck
     routes:
       - path: /webhook
       - path: /roles
@@ -89,7 +91,7 @@ workers:
       registry_type: DOCR
       repository: reaper-stripe
       tag: latest
-    instance_count: 1
+    instance_count: 2
     instance_size_slug: professional-xs
 domains:
   - domain: shuudann.com
@@ -99,8 +101,15 @@ databases:
   - engine: PG
     name: postgres-cluster
     version: "12"
+    production: true
+    cluster_name: db-postgresql-sfo3-10792
   - engine: REDIS
     name: redis-cluster
     cluster_name: db-redis-sfo3-06834
     production: true
     version: "6"
+envs:
+- key: STRIPE_WEBHOOK_SECRET
+  scope: RUN_AND_BUILD_TIME
+  type: SECRET
+  value: EV[1:41583U/4oiq2YhGpIWYj2dj5edIByq3z:xEzIjgZXcCzOOoXdgdy2ovMqCmGWQ+znZcrJ0WOZKQ+U5KqXdcWsnB0vwxYNa9TLU1iNqMkJ]

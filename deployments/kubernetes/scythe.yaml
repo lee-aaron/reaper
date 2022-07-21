@@ -1,0 +1,15 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: scythe
+  labels:
+    app: scythe
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    spec:
+      containers:
+        - image: registry.digitalocean.com/lee-aaron-registry/shuudann-scythe
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80

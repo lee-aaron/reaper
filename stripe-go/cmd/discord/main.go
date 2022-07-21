@@ -85,6 +85,8 @@ func startHTTPServer(db *sql.DB, session *discordgo.Session, port string) (httpS
 		}
 	}()
 
+	fmt.Fprintf(os.Stdout, "Starting HTTP server on port %s\n", port)
+
 	signal.Notify(stop, syscall.SIGTERM)
 
 	return httpServer, stop
@@ -95,8 +97,12 @@ func main() {
 	if config.Database.Require_ssl {
 		sslmode = "require"
 	}
+
 	dbinfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		config.Database.Host, config.Database.Port, config.Database.Username, config.Database.Password, config.Database.Database_name, sslmode)
+
+	fmt.Fprintf(os.Stdout, "Connecting to database... %s as user %s\n", config.Database.Database_name, config.Database.Username)
+
 	db, err := sql.Open("postgres", dbinfo)
 	if err != nil {
 		log.Fatal(err)
@@ -110,7 +116,7 @@ func main() {
 
 	defer closeComponent("Discord session", session)
 
-	httpServer, stop := startHTTPServer(db, session, fmt.Sprint(config.Payments.WebhookPort))
+	httpServer, stop := startHTTPServer(db, session, fmt.Sprint(config.Payments.Webhook_port))
 	<-stop
 
 	shutdownCtx, cancelShutdownCtx := context.WithTimeout(context.Background(), contextTimeout)

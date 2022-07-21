@@ -36,9 +36,9 @@ type StripeSettings struct {
 }
 
 type PaymentsSettings struct {
-	Port        uint
-	Host        string
-	WebhookPort uint
+	Port         uint
+	Host         string
+	Webhook_port uint
 }
 
 type DiscordSettings struct {
@@ -120,6 +120,8 @@ func LoadYaml() Settings {
 			settings.Database.Host = vars[1]
 		case "database.database_name":
 			settings.Database.Database_name = vars[1]
+		case "database.require_ssl":
+			settings.Database.Require_ssl = vars[1] == "true"
 		}
 	}
 

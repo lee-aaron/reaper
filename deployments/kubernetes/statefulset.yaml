@@ -3,7 +3,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: discord
-  namespace: reaper
+  namespace: shuudann
   labels:
     app: discord
 spec:
@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: discord
-          image: registry.digitalocean.com/lee-aaron-reg/discord
+          image: registry.digitalocean.com/lee-aaron-reg/reaper-discord
           imagePullPolicy: Always
           ports:
             - name: http
