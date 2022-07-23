@@ -30,6 +30,12 @@ impl Application {
         );
         let listener = TcpListener::bind(&address)?;
         let port = listener.local_addr().unwrap().port();
+
+        tracing::debug!(
+            "Connecting to redis_uri: {}",
+            configuration.redis_uri.expose_secret()
+        );
+
         let server = run(
             listener,
             connection_pool,
@@ -82,34 +88,37 @@ async fn run(
             ))
             .wrap(TracingLogger::default())
             .wrap(Governor::new(&governor_conf))
-            .route("/login", web::get().to(login_form))
-            .route("/login", web::post().to(login))
-            .route("/health_check", web::get().to(health_check))
             .service(
-                web::scope("/v1")
-                    .wrap(from_fn(reject_anonymous_users))
-                    .route("/logout", web::get().to(log_out))
-                    .route("/get_guilds", web::get().to(get_guilds))
-                    .route("/get_user", web::get().to(get_user))
-                    .route("/get_roles", web::get().to(get_role))
-                    .route("/search_guilds", web::get().to(search_guilds))
-                    .route("/create_product", web::post().to(create_product_flow))
-                    .route("/search_product", web::get().to(search_product))
-                    .route("/search_one_product", web::get().to(search_one_product))
-                    .route("/search_owner_product", web::get().to(search_owner_product))
-                    .route("/get_account", web::get().to(get_account))
-                    .route("/create_account", web::post().to(create_account))
-                    .route("/get_account_link", web::get().to(get_account_link))
-                    .route("/get_customer", web::get().to(get_customer))
-                    .route("/create_customer", web::post().to(create_customer))
-                    .route("/create_subscription", web::post().to(create_subscription))
-                    .route("/search_subscription", web::get().to(search_subscriptions))
-                    .route(
-                        "/cancel_subscription",
-                        web::delete().to(cancel_subscriptions),
-                    )
-                    .route("/create_portal", web::get().to(create_portal))
-                    .route("/create_login_link", web::get().to(create_login_link))
+                web::scope("/api")
+                    .route("/login", web::get().to(login_form))
+                    .route("/login", web::post().to(login))
+                    .route("/health_check", web::get().to(health_check))
+                    .service(
+                        web::scope("/v1")
+                            .wrap(from_fn(reject_anonymous_users))
+                            .route("/logout", web::get().to(log_out))
+                            .route("/get_guilds", web::get().to(get_guilds))
+                            .route("/get_user", web::get().to(get_user))
+                            .route("/get_roles", web::get().to(get_role))
+                            .route("/search_guilds", web::get().to(search_guilds))
+                            .route("/create_product", web::post().to(create_product_flow))
+                            .route("/search_product", web::get().to(search_product))
+                            .route("/search_one_product", web::get().to(search_one_product))
+                            .route("/search_owner_product", web::get().to(search_owner_product))
+                            .route("/get_account", web::get().to(get_account))
+                            .route("/create_account", web::post().to(create_account))
+                            .route("/get_account_link", web::get().to(get_account_link))
+                            .route("/get_customer", web::get().to(get_customer))
+                            .route("/create_customer", web::post().to(create_customer))
+                            .route("/create_subscription", web::post().to(create_subscription))
+                            .route("/search_subscription", web::get().to(search_subscriptions))
+                            .route(
+                                "/cancel_subscription",
+                                web::delete().to(cancel_subscriptions),
+                            )
+                            .route("/create_portal", web::get().to(create_portal))
+                            .route("/create_login_link", web::get().to(create_login_link)),
+                    ),
             )
             .app_data(db_pool.clone())
             .app_data(base_url.clone())

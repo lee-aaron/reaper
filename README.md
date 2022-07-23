@@ -21,3 +21,9 @@ RUST_LOG=debug cargo watch -w 'api' -w 'shared' -x 'run --guilds'
 HTTP/2/3 servers?
 Stripe Billing, Database Interaction
 ```
+
+## Kubernetes Notes
+
+```
+helm install my-redis bitnami/redis
+```

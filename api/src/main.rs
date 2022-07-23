@@ -5,7 +5,7 @@ use tokio::task::JoinError;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let subscriber = get_subscriber("guilds".into(), "info".into(), std::io::stdout);
+    let subscriber = get_subscriber("shuudann-api".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
     let configuration = get_configuration().expect("Failed to read configuration");

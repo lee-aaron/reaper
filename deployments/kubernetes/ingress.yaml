@@ -3,17 +3,26 @@ kind: Ingress
 metadata:
   name: root-ingress
   annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-http01-issuer
     kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: kn-letsencrypt-http01-issuer
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
-    - shuudann.com
+    - "shuudann.com"
+    - "*.shuudann.com"
     secretName: root-tls
   rules:
   - host: "shuudann.com"
     http:
       paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: scythe
+            port:
+              number: 80
       - pathType: Prefix
         path: /api
         backend:
@@ -27,18 +36,4 @@ spec:
           service:
             name: discord
             port:
-              number: 9001
-      - pathType: Exact
-        path: /botcheck
-        backend:
-          service:
-            name: discord
-            port:
-              number: 9001
-      - pathType: Exact
-        path: /webhook
-        backend:
-          service:
-            name: discord
-            port:
-              number: 9001
+              number: 9000

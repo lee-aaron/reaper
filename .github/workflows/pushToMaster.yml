@@ -1,0 +1,128 @@
+name: Build and Publish
+
+on: push
+
+jobs:
+  build_api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Build image
+        run: docker build -t shuudann-api -f build/package/api/Dockerfile .
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Tag image
+        run: docker tag shuudann-api registry.digitalocean.com/lee-aaron-registry/shuudann-api:latest
+
+      - name: Push image to DO Container Registry
+        run: docker push registry.digitalocean.com/lee-aaron-registry/shuudann-api:latest
+
+  build_stripe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Build binary
+        run: cd stripe-go && make build-stripe && mv build/package/stripe-go/stripe ../build/package/stripe/ && cd ..
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build image
+        run: docker build -t shuudann-stripe -f build/package/stripe/Dockerfile .
+
+      - name: Tag image
+        run: docker tag shuudann-stripe registry.digitalocean.com/lee-aaron-registry/shuudann-stripe:latest
+
+      - name: Push image to DO Container Registry
+        run: docker push registry.digitalocean.com/lee-aaron-registry/shuudann-stripe:latest
+
+  build_discord:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Build binary
+        run: cd stripe-go && make build-discord && mv build/package/stripe-go/discord ../build/package/discord/ && cd ..
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build image
+        run: docker build -t shuudann-discord -f build/package/discord/Dockerfile .
+    
+      - name: Tag image
+        run: docker tag shuudann-discord registry.digitalocean.com/lee-aaron-registry/shuudann-discord:latest
+
+      - name: Push image to DO Container Registry
+        run: docker push registry.digitalocean.com/lee-aaron-registry/shuudann-discord:latest
+
+  build_scythe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+
+      - name: Build image
+        run: docker build -t shuudann-scythe -f build/package/discord/Dockerfile .
+    
+      - name: Tag image
+        run: docker tag shuudann-scythe registry.digitalocean.com/lee-aaron-registry/shuudann-scythe:latest
+
+      - name: Push image to DO Container Registry
+        run: docker push registry.digitalocean.com/lee-aaron-registry/shuudann-scythe:latest
+  
+  publish:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    needs: [build_discord, build_stripe, build_api, build_scythe]
+    steps:
+      - name: DigitalOcean App Platform deployment
+        uses: digitalocean/app_action@main
+        with:
+          app_name: shuudann-cluster
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Deploy to Kubernetes
+        env:
+          KUBERNETES_CONFIG: "${{ secrets.KUBERNETES_CONFIG }}"
+        run: |
+          PATH="${PATH}:$(go env GOPATH)/bin"
+          KUBECTL_BIN="$(go env GOPATH)/bin/kubectl"
+          KUBECTL_VERSION_URL="https://storage.googleapis.com/kubernetes-release/release/stable.txt"
+          KUBECTL_VERSION="$(curl -s ${KUBECTL_VERSION_URL})"
+          KUBECTL_URL="https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          curl -sL "${KUBECTL_URL}" -o "${KUBECTL_BIN}"
+          chmod +x "${KUBECTL_BIN}"
+          mkdir ~/.kube
+          echo "${KUBERNETES_CONFIG}" > ~/.kube/config
+          ./scripts/deploy.sh
