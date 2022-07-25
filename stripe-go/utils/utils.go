@@ -47,7 +47,6 @@ type DiscordSettings struct {
 
 const (
 	Development = "local"
-	Production  = "production"
 )
 
 func GetEnvironment() string {

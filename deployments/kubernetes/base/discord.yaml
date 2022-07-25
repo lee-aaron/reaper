@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: discord
+  labels:
+    app: discord
+spec:
+  type: ClusterIP
+  selector:
+    app: discord
+  ports:
+  - port: 9001
+    targetPort: 9001
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: discord
+  labels:
+    app: discord
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: discord
+  serviceName: discord
+  template:
+    metadata:
+      labels:
+        app: discord
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: discord
+          image: registry.digitalocean.com/lee-aaron-registry/shuudann-discord
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 9001
+          env:
+          - name: APP_DATABASE__USERNAME
+            value: admin
+          - name: APP_DATABASE__PASSWORD
+            value: 3dd6b15890c45f6bb7db
+          - name: APP_DATABASE__HOST
+            value: my-postgres-postgresql.default.svc.cluster.local
+          - name: APP_DATABASE__PORT
+            value: '5432'
+          - name: APP_DATABASE__DATABASE_NAME
+            value: shuudann
+          - name: GO_ENV
+            value: production

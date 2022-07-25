@@ -32,7 +32,8 @@ export const logoutRequest = createAsyncThunk(
   "auth/logoutRequest",
   async (_, thunkAPI) => {
     try {
-      const res = await fetch("/api/v1/logout", {
+      const res = await fetch("/api/logout", {
+        method: "POST",
         signal: thunkAPI.signal,
       });
       if (res.status !== 200) {

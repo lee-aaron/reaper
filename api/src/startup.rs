@@ -92,11 +92,11 @@ async fn run(
                 web::scope("/api")
                     .route("/login", web::get().to(login_form))
                     .route("/login", web::post().to(login))
+                    .route("/logout", web::post().to(log_out))
                     .route("/health_check", web::get().to(health_check))
                     .service(
                         web::scope("/v1")
                             .wrap(from_fn(reject_anonymous_users))
-                            .route("/logout", web::get().to(log_out))
                             .route("/get_guilds", web::get().to(get_guilds))
                             .route("/get_user", web::get().to(get_user))
                             .route("/get_roles", web::get().to(get_role))

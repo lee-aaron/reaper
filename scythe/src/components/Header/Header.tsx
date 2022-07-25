@@ -39,7 +39,7 @@ const Header: React.FC<Props> = (props: Props) => {
       <Head>
         <title>Shuudann</title>
       </Head>
-      <AppBar position="static">
+      <AppBar position="static" color="primary">
         <Toolbar>
           {isAuthenticated ? <NavMenu /> : null}
           <Typography
@@ -50,7 +50,7 @@ const Header: React.FC<Props> = (props: Props) => {
             Shuudann
           </Typography>
           <Tooltip title="Dark Mode">
-            <IconButton onClick={props.toggleColorMode}>
+            <IconButton color="inherit" onClick={props.toggleColorMode}>
               {theme.palette.mode === "dark" ? (
                 <Brightness7Icon />
               ) : (
@@ -58,7 +58,7 @@ const Header: React.FC<Props> = (props: Props) => {
               )}
             </IconButton>
           </Tooltip>
-          <IconButton>
+          <IconButton color="inherit">
             {isAuthenticated ? (
               <Link href="/login">
                 <Tooltip title="Logout">

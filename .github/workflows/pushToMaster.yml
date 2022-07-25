@@ -108,23 +108,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_discord, build_stripe, build_api, build_scythe]
     steps:
-      - name: DigitalOcean App Platform deployment
-        uses: digitalocean/app_action@main
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
         with:
-          app_name: shuudann-cluster
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
-      - name: Deploy to Kubernetes
-        env:
-          KUBERNETES_CONFIG: "${{ secrets.KUBERNETES_CONFIG }}"
-        run: |
-          PATH="${PATH}:$(go env GOPATH)/bin"
-          KUBECTL_BIN="$(go env GOPATH)/bin/kubectl"
-          KUBECTL_VERSION_URL="https://storage.googleapis.com/kubernetes-release/release/stable.txt"
-          KUBECTL_VERSION="$(curl -s ${KUBECTL_VERSION_URL})"
-          KUBECTL_URL="https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
-          curl -sL "${KUBECTL_URL}" -o "${KUBECTL_BIN}"
-          chmod +x "${KUBECTL_BIN}"
-          mkdir ~/.kube
-          echo "${KUBERNETES_CONFIG}" > ~/.kube/config
-          ./scripts/deploy.sh
+      - name: Save DigitalOcean kubeconfig with short-lived credentials
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 shuudann-cluster
+
+      - name: Deploy to DigitalOcean Kubernetes
+        run: ./scripts/deploy.sh

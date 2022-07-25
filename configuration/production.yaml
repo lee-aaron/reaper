@@ -11,4 +11,4 @@ discord:
   frontend_uri: "https://shuudann.com"
   bot_token: "OTY2NDUzODA5MzM1MzgyMTA2.GX_UYB.ugjXorGUho04BqB0QLG0dnmGy8nMMVSPQP8NXE"
 stripe:
-  secret_key: "sk_test_7YRSRbVKSQDOG5eFwGhmyNbb008VJ25gVL"
+  secret_key: "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"
