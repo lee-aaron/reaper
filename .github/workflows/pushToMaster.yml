@@ -108,6 +108,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build_discord, build_stripe, build_api, build_scythe]
     steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
