@@ -31,6 +31,7 @@ export default function SettingsMenu() {
   return (
     <>
       <IconButton
+        color="inherit"
         ref={anchorRef}
         onClick={handleOpen}
         sx={{

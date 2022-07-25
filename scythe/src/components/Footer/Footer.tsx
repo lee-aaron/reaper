@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
             <Typography variant="subtitle2">Privacy Policy</Typography>
           </Link>
         </Stack>
-        <Typography variant="body2" color="text.secondary" align="center">
+        <Typography variant="body2" align="center">
           {"Copyright © "}
           Shuudann {new Date().getFullYear()}
           {". All Rights Reserved"}

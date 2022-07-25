@@ -1,0 +1,14 @@
+application:
+  host: 0.0.0.0
+  base_url: "https://shuudann.com"
+database:
+  require_ssl: true
+discord:
+  client_id: "999341580014076034"
+  client_secret: "-Eqgjs2zki-QoVxBKBaPvvt5c7RA7Jqj"
+  grant_type: "authorization_code"
+  redirect_uri: "https://staging.shuudann.com/login"
+  frontend_uri: "https://staging.shuudann.com"
+  bot_token: "OTk5MzQxNTgwMDE0MDc2MDM0.GnJHdK.gMg_fDzgUeaQ4hQcdsbYgJTVxQWG4flpF7bWNA"
+stripe:
+  secret_key: "sk_test_7YRSRbVKSQDOG5eFwGhmyNbb008VJ25gVL"

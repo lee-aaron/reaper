@@ -26,7 +26,7 @@ func (srv *SubscriptionServer) CreateSubscription(ctx context.Context, req *pb.C
 			},
 		},
 		PaymentBehavior:       stripe.String("default_incomplete"),
-		ApplicationFeePercent: stripe.Float64(10),
+		ApplicationFeePercent: stripe.Float64(5),
 	}
 
 	params.AddExpand("latest_invoice.payment_intent")

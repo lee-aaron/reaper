@@ -128,8 +128,10 @@ export default createReducer(initialState, (builder) => {
     .addCase(GetAccount.fulfilled, (state, action) => {
       if (state.owner.loading === "loading") {
         state.owner.loading = "idle";
-        state.owner.id = action.payload.stripe_id;
-        state.owner.status = action.payload.status;
+        if (action.payload) {
+          state.owner.id = action.payload.stripe_id;
+          state.owner.status = action.payload.status;
+        }
       }
     })
     .addCase(GetAccount.rejected, (state, action) => {
@@ -219,7 +221,9 @@ export default createReducer(initialState, (builder) => {
       if (state.roles.loading === "loading") {
         state.roles.loading = "idle";
         state.roles.roles = action.payload;
-        state.roles.roles = state.roles.roles.filter(role => role.name !== "@everyone");
+        state.roles.roles = state.roles.roles.filter(
+          (role) => role.name !== "@everyone"
+        );
       }
     })
     .addCase(GetRole.rejected, (state, action) => {
@@ -239,5 +243,5 @@ export default createReducer(initialState, (builder) => {
       if (!action.meta.aborted) {
         state.prod.loading = "error";
       }
-    })
+    });
 });

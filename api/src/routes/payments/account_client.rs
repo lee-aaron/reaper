@@ -224,8 +224,7 @@ pub async fn get_account(
         .account_client
         .get_account(&pg, query.0.discord_id.clone())
         .await
-        .context("Failed to retrieve the account")?
-        .ok_or(AccountError::AccountNotFound)?;
+        .context("Failed to retrieve the account")?;
 
     Ok(HttpResponse::Ok().json(owner))
 }

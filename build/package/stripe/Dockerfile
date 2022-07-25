@@ -9,7 +9,6 @@ COPY --from=base /usr/share/zoneinfo /usr/share/zoneinfo
 COPY build/package/stripe/ .
 COPY configuration /configuration
 
-ENV GO_ENV production
 EXPOSE 8081
 
 ENTRYPOINT ["./stripe"]
