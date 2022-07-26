@@ -5,10 +5,12 @@ import UserUpdater from "../../state/user/updater";
 import AuthUpdater from "../../state/authentication/updater";
 import DiscordUpdater from "../../state/discord/updater";
 import PaymentsUpdater from "../../state/payments/updater";
-import Footer from "../Footer";
-import Header from "../Header";
 import { SnackbarUtilsConfigurator } from "../../utils/SnackbarUtils";
 import { DEFAULT_DISMISS_MS } from "../../constants/misc";
+import dynamic from "next/dynamic";
+
+const Footer = dynamic(() => import("../Footer"));
+const Header = dynamic(() => import("../Header"));
 
 function Updaters() {
   return (

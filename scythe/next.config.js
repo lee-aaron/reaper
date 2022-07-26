@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const { PHASE_DEVELOPMENT_SERVER } = require("next/constants");
 
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+})
+
 const nextConfig = (phase, { defaultConfig }) => {
   if (phase === PHASE_DEVELOPMENT_SERVER) {
     return {
@@ -28,4 +32,8 @@ const nextConfig = (phase, { defaultConfig }) => {
   };
 };
 
-module.exports = nextConfig;
+if (process.env.ANALYZE === "true") {
+  module.exports = withBundleAnalyzer(nextConfig);
+} else {
+  module.exports = nextConfig;
+}

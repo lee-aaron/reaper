@@ -19,6 +19,7 @@
     "@mui/lab": "^5.0.0-alpha.90",
     "@mui/material": "^5.9.0",
     "@mui/x-data-grid": "^5.13.0",
+    "@next/bundle-analyzer": "^12.2.3",
     "@reduxjs/toolkit": "^1.8.3",
     "@stripe/react-stripe-js": "^1.9.0",
     "@stripe/stripe-js": "^1.32.0",

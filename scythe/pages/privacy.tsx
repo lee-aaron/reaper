@@ -225,7 +225,7 @@ export default function Privacy() {
             would like to exercise any of these rights, please contact us.
           </p>
 
-          <Typography variant="h3">Children's Information</Typography>
+          <Typography variant="h3">Children&apos;s Information</Typography>
 
           <p>
             Another part of our priority is adding protection for children while

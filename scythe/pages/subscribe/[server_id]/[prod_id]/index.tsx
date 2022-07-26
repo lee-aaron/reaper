@@ -1,10 +1,15 @@
 import { Container } from "@mui/material";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React from "react";
-import CustomerForm from "../../../../src/components/Customer/form";
-import SubscriptionCard from "../../../../src/components/Subscription/SubscriptionCard";
 import { useIsAuthenticated } from "../../../../src/state/authentication/hooks";
 import { useCustomer } from "../../../../src/state/payments/hooks";
+const CustomerForm = dynamic(
+  () => import("../../../../src/components/Customer/form")
+);
+const SubscriptionCard = dynamic(
+  () => import("../../../../src/components/Subscription/SubscriptionCard")
+);
 
 const SubscribePage: React.FC<{}> = () => {
   const router = useRouter();

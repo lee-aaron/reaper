@@ -1,13 +1,16 @@
 import { Container, Paper } from "@mui/material";
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import Loading from "../../../../src/components/Loading";
-import CheckoutForm from "../../../../src/components/Stripe/CheckoutForm";
 import { useIsAuthenticated } from "../../../../src/state/authentication/hooks";
 import { useStripe } from "../../../../src/state/stripe/hooks";
 import { useIsDarkMode } from "../../../../src/state/user/hooks";
+const CheckoutForm = dynamic(
+  () => import("../../../../src/components/Stripe/CheckoutForm")
+);
 
 const Payment: React.FC<{}> = () => {
   const router = useRouter();
@@ -38,9 +41,11 @@ const Payment: React.FC<{}> = () => {
         !stripe.secret[router.query.prod_id as string] ? (
           <Loading />
         ) : (
-          <Paper sx={{
-            padding: 3,
-          }}>
+          <Paper
+            sx={{
+              padding: 3,
+            }}
+          >
             <Elements
               stripe={stripePromise}
               options={{

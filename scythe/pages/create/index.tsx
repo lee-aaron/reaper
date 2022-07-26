@@ -8,13 +8,16 @@ import {
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React from "react";
-import { CreateAccount } from "../../src/components/Account/";
-import AccountLink from "../../src/components/Account/AccountLink";
-import Payment from "../../src/components/Product";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 import { useOwner } from "../../src/state/payments/hooks";
+const Payment = dynamic(() => import("../../src/components/Product"));
+const AccountLink = dynamic(
+  () => import("../../src/components/Account/AccountLink")
+);
+const CreateAccount = dynamic(() => import("../../src/components/Account/"));
 
 const Create: NextPage = () => {
   const theme = useTheme();

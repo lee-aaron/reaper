@@ -1,20 +1,23 @@
 import SearchIcon from "@mui/icons-material/Search";
 import {
-  Avatar, Card, CardContent,
-  CardHeader,
   Container,
-  Grid,
   IconButton,
   Paper,
   TextField,
-  Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/router";
 import React, { useEffect } from "react";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
+const Grid = dynamic(() => import("@mui/material/Grid"));
+const Avatar = dynamic(() => import("@mui/material/Avatar"));
+const Card = dynamic(() => import("@mui/material/Card"));
+const CardHeader = dynamic(() => import("@mui/material/CardHeader"));
+const CardContent = dynamic(() => import("@mui/material/CardContent"));
+const Tooltip = dynamic(() => import("@mui/material/Tooltip"));
 
 interface ServerInfo {
   server_id: string;
@@ -32,7 +35,7 @@ function stringToColor(string: string) {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  let color = '#';
+  let color = "#";
 
   for (i = 0; i < 3; i += 1) {
     const value = (hash >> (i * 8)) & 0xff;
@@ -50,7 +53,7 @@ function stringAvatar(name: string) {
       width: "64px",
       bgcolor: stringToColor(name),
     },
-    children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
+    children: `${name.split(" ")[0][0]}${name.split(" ")[1][0]}`,
   };
 }
 
@@ -60,9 +63,7 @@ const Subscribe: NextPage = () => {
   const router = useRouter();
   const [form, setForm] = React.useState<any>();
   const [error, setError] = React.useState<boolean>();
-  const [serverInfo, setServerInfo] = React.useState(
-    Array<ServerInfo>()
-  );
+  const [serverInfo, setServerInfo] = React.useState(Array<ServerInfo>());
 
   if (!isAuthenticated) {
     router.push("/login");
@@ -189,20 +190,23 @@ const Subscribe: NextPage = () => {
                   sx={{ maxWidth: 340, padding: "1rem", my: "1rem" }}
                   onClick={() => {
                     router.push({
-                      pathname: `/subscribe/${sub.server_id}`
+                      pathname: `/subscribe/${sub.server_id}`,
                     });
                   }}
                 >
                   <CardHeader
                     avatar={
-                      sub.icon ? 
-                      <Avatar
-                        sx={{
-                          height: "64px",
-                          width: "64px",
-                        }}
-                        src={`https://cdn.discordapp.com/icons/${sub.server_id}/${sub.icon}.png?size=64`}
-                      /> : <Avatar {...stringAvatar(sub.name)} />
+                      sub.icon ? (
+                        <Avatar
+                          sx={{
+                            height: "64px",
+                            width: "64px",
+                          }}
+                          src={`https://cdn.discordapp.com/icons/${sub.server_id}/${sub.icon}.png?size=64`}
+                        />
+                      ) : (
+                        <Avatar {...stringAvatar(sub.name)} />
+                      )
                     }
                     title={sub.name}
                   />

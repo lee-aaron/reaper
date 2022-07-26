@@ -1,6 +1,5 @@
 import { LoadingButton } from "@mui/lab";
 import {
-  Box,
   Button,
   CardActions,
   Container,
@@ -16,9 +15,9 @@ import {
   useTheme,
 } from "@mui/material";
 import type { NextPage } from "next";
-import router, { useRouter } from "next/router";
+import dynamic from "next/dynamic";
+import { useRouter } from "next/router";
 import React, { useEffect } from "react";
-import SubCard from "../../src/components/Subscription/Card";
 import { useIsAuthenticated } from "../../src/state/authentication/hooks";
 import { useUser } from "../../src/state/discord/hooks";
 import { useAppDispatch } from "../../src/state/hooks";
@@ -28,6 +27,7 @@ import {
 } from "../../src/state/payments/actions";
 import { useCustomer, useOwner } from "../../src/state/payments/hooks";
 import { DashboardSubscription } from "../../src/state/payments/reducer";
+const SubCard = dynamic(() => import("../../src/components/Subscription/Card"));
 
 const Subscribe: NextPage = () => {
   const theme = useTheme();
@@ -91,11 +91,11 @@ const Subscribe: NextPage = () => {
 
   const handleViewAll = () => {
     let query = {
-      discord_id: user.id
-    }
+      discord_id: user.id,
+    };
 
     router.push(`/api/v1/create_login_link?${new URLSearchParams(query)}`);
-  }
+  };
 
   return (
     <React.Fragment>
@@ -126,9 +126,18 @@ const Subscribe: NextPage = () => {
               p: 2,
             }}
           >
-            <Paper sx={{ p: 3 }} component={Stack} direction="column" justifyContent="center">
-              <Typography variant="h5">View your Customers and Track Income</Typography>
-              <Button sx={{ mt: 2 }} onClick={handleViewAll}>Click to be redirected</Button>
+            <Paper
+              sx={{ p: 3 }}
+              component={Stack}
+              direction="column"
+              justifyContent="center"
+            >
+              <Typography variant="h5">
+                View your Customers and Track Income
+              </Typography>
+              <Button sx={{ mt: 2 }} onClick={handleViewAll}>
+                Click to be redirected
+              </Button>
             </Paper>
           </Grid>
         )}
