@@ -96,7 +96,7 @@ jobs:
         run: doctl registry login --expiry-seconds 600
 
       - name: Build image
-        run: docker build -t shuudann-scythe -f build/package/discord/Dockerfile .
+        run: docker build -t shuudann-scythe -f build/package/scythe/Dockerfile .
     
       - name: Tag image
         run: docker tag shuudann-scythe registry.digitalocean.com/lee-aaron-registry/shuudann-scythe:latest

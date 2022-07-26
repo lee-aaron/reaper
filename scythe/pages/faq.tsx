@@ -98,6 +98,16 @@ const FAQ: NextPage = () => {
               customer or if you are an owner.
             </Typography>
           </Item>
+          <Item>
+            <Typography variant="h6" align="center">
+              Seeing some internal server errors?
+            </Typography>
+            <Typography variant="body1" align="center">
+              Try logging out and logging back in again as your session may have
+              expired. If this does not work, please open a ticket describing
+              the problem.
+            </Typography>
+          </Item>
         </Stack>
       </Container>
     </React.Fragment>
