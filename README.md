@@ -1,5 +1,7 @@
 # guilds.gg
 
+All private tokens and keys you see are not in use anymore or have since been deprecated.
+
 ## Front End
 
 ```
